@@ -2,7 +2,7 @@
 
 Sea Bienvenido al repositorio del ProyectoIngesoft del Equipo A.
 
-Este repositorio es la recopilación de las asignaciones del curso y el proyecto del mismo, a continuación encontrara más información del mismo.
+Este repositorio es la recopilación de las asignaciones del curso y el proyecto del mismo, a continuación encontrará más información del mismo.
 
 ## Asignaciones
 
@@ -16,7 +16,7 @@ Esta es una lista con las asignaciones del proyecto:
 
 ## Proyecto
 
-Temporalmente el proyecto es solo un placeholder esta información se actualizara en el futuro.
+Temporalmente el proyecto es solo un placeholder, esta información se actualizará en el futuro.
 
 ### Documentación
 
@@ -24,17 +24,17 @@ Documentación relacionada al proyecto, de momento es solo un placeholder.
 
 ### How to run
 
-Sección reservada para como compilar y ejecutar el Proyecto
+Sección reservada para cómo compilar y ejecutar el Proyecto
 
 ```bash
 # TODO: placeholder
 ```
 
-## Como contribuir
+## Cómo contribuir
 
 Para contribuir lea las reglas [aquí](./how_to_contribute.md).
 
-## Contribudores
+## Contribuidores
 
 - [Samuel Burgos](https://github.com/ThePixelCode)
 
