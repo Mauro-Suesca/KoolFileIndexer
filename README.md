@@ -12,7 +12,7 @@ Esta es una lista con las asignaciones del proyecto:
 
 2. [Tarea 2](./Asignaciones/Tarea_02.pdf)
 
-3. Tarea 3: [msuesca](./Asignaciones/Tarea_03_msuesca.pdf)
+3. Tarea 3: [msuesca](./Asignaciones/Tarea_03_msuesca.pdf), [sburgos](./Asignaciones/Tarea_03_sburgos.pdf)
 
 ## Proyecto
 
