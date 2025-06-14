@@ -44,7 +44,7 @@ Para contribuir lea las reglas [aquí](./how_to_contribute.md).
 
 ## Contribuidores
 
-- [Samuel Burgos](https://github.com/ThePixelCode)
+- [Samuel Burgos](https://github.com/ThePixelCode) - <sburgos@unal.edu.co>
 
 - [Juan Camilo](https://github.com/camargoOzen)
 
