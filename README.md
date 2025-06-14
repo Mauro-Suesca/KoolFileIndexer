@@ -50,4 +50,4 @@ Para contribuir lea las reglas [aquí](./how_to_contribute.md).
 
 - [Mauro Alejandro](https://github.com/Mauro-Suesca) - <msuesca@unal.edu.co>
 
-- [Juan David](https://github.com/Juardilap)
+- [Juan David](https://github.com/Juardilap) - <juardilap@unal.edu.co>
