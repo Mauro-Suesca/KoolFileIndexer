@@ -1,6 +1,6 @@
-# ProyectoIngesoft del Equipo A
+# KoolFileIndexer del Equipo A
 
-Sea Bienvenido al repositorio del ProyectoIngesoft del Equipo A.
+Sea Bienvenido al repositorio de KoolFileIndexer del Equipo A.
 
 Este repositorio es la recopilación de las asignaciones del curso y el proyecto del mismo, a continuación encontrará más información del mismo.
 
@@ -18,11 +18,17 @@ Esta es una lista con las asignaciones del proyecto:
 
 ## Proyecto
 
-Temporalmente el proyecto es solo un placeholder, esta información se actualizará en el futuro.
+### Descripción y Objetivo General
+
+Este es un sistema que permite indexar archivos de un equipo local, extrayendo y almacenando sus metadatos en una base de datos relacional, para facilitar su búsqueda, organización y clasificación mediante filtros, palabras clave y categorías automáticas y generadas por el usuario.
 
 ### Documentación
 
-Documentación relacionada al proyecto, de momento es solo un placeholder.
+Esta es una lista con la documentación del proyecto:
+
+1. [Requerimientos, reglas de negocio, alcance y restricciones](./Documentación/Proyecto.pdf)
+2. [Casos de Uso](./Documentación/Casos_de_uso/)
+
 
 ### How to run
 
@@ -42,6 +48,6 @@ Para contribuir lea las reglas [aquí](./how_to_contribute.md).
 
 - [Juan Camilo](https://github.com/camargoOzen)
 
-- [Mauro Alejandro](https://github.com/Mauro-Suesca)
+- [Mauro Alejandro](https://github.com/Mauro-Suesca) - <msuesca@unal.edu.co>
 
 - [Juan David](https://github.com/Juardilap)
