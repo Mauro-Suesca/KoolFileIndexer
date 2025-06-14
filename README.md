@@ -46,7 +46,7 @@ Para contribuir lea las reglas [aquí](./how_to_contribute.md).
 
 - [Samuel Burgos](https://github.com/ThePixelCode) - <sburgos@unal.edu.co>
 
-- [Juan Camilo](https://github.com/camargoOzen)
+- [Juan Camilo](https://github.com/camargoOzen) - <jucamargop@unal.edu.co>
 
 - [Mauro Alejandro](https://github.com/Mauro-Suesca) - <msuesca@unal.edu.co>
 
