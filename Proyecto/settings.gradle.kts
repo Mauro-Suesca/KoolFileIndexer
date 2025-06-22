@@ -17,4 +17,4 @@ plugins {
 }
 
 rootProject.name = "KoolFileIndexer"
-include("app", "list", "utilities")
+include("app")
