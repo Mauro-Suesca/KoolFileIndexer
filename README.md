@@ -12,7 +12,7 @@ Esta es una lista con las asignaciones del proyecto:
 
 2. [Tarea 2](./Asignaciones/Tarea_02.pdf)
 
-3. 
+3. [Taller 1](./Asignaciones/Taller_01.pdf)
 
 4. [Tarea 4](./Asignaciones/Tarea_04.pdf)
 
@@ -28,6 +28,8 @@ Esta es una lista con la documentación del proyecto:
 
 1. [Requerimientos, reglas de negocio, alcance y restricciones](./Documentación/Proyecto.pdf)
 2. [Casos de Uso](./Documentación/Casos_de_uso/)
+3. [Diagrama casos de uso](./Documentación/Diagramas/diagrama_casos_de_uso.png)
+3. [Diagrama base de datos](./Documentación/Diagramas/diagrama_bd.png)
 
 
 ### How to run
