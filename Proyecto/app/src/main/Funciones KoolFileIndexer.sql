@@ -140,3 +140,62 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 9. Función: Desasociar Palabra Clave de Archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_desasociar_palabra_clave_archivo(carpeta VARCHAR, nombre VARCHAR, extension VARCHAR, palabra VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM Archivo_tiene_Palabra_clave
+  WHERE arcp_arc_id IN (
+    SELECT arc_id
+    FROM Archivo
+    JOIN Ubicacion ON arc_ubi_id = ubi_id
+    JOIN Extension ON arc_ext_id = ext_id
+    WHERE ubi_path = carpeta AND arc_nombre = nombre AND ext_extension = extension
+  ) AND arcp_pal_id IN (
+	SELECT pal_id
+    FROM Palabra_clave
+    WHERE pal_palabra = palabra
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 10. Función: Desasociar Etiqueta de Archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_desasociar_etiqueta_archivo(carpeta VARCHAR, nombre VARCHAR, extension VARCHAR, etiqueta VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM Etiqueta_tiene_Archivo
+  WHERE etia_arc_id IN (
+    SELECT arc_id
+    FROM Archivo
+    JOIN Ubicacion ON arc_ubi_id = ubi_id
+    JOIN Extension ON arc_ext_id = ext_id
+    WHERE ubi_path = carpeta AND arc_nombre = nombre AND ext_extension = extension
+  ) AND etia_eti_id IN (
+	SELECT eti_id
+    FROM Etiqueta
+    WHERE eti_nombre = etiqueta
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 11. Función: Eliminar Etiqueta
+-- =========================================
+DROP FUNCTION IF EXISTS sp_eliminar_etiqueta(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_eliminar_etiqueta(nombre VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM Etiqueta
+  WHERE eti_nombre = etiqueta;
+END;
+$$ LANGUAGE plpgsql;
