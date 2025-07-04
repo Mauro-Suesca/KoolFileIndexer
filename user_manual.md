@@ -28,7 +28,7 @@ KoolFileIndexer es una aplicación de escritorio desarrollada para funcionar en 
 ### Requisitos recomendados (estimados)
 
 - Sistema operativo: Windows 11, Ubuntu 22.04 o macOS 13 (64 bits)
-- Procesador: Cuatro núcleos (placeholder)
+- Procesador: Cuatro núcleos
 - Memoria RAM: **4 GB o más**
 - Espacio en disco: **500 MB o más**, dependiendo de la cantidad de archivos a indexar
 - Resolución de pantalla: 1366x768 o superior
