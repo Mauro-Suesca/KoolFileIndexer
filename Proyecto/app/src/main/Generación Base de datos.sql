@@ -122,7 +122,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_borrar_etiqueta
-AFTER DELETE ON Etiqueta_tiene_Archivo
+AFTER DELETE OR UPDATE ON Etiqueta_tiene_Archivo
 FOR EACH ROW
 EXECUTE FUNCTION borrar_etiqueta_si_no_usada();
 
@@ -142,6 +142,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_borrar_palabra
-AFTER DELETE ON Archivo_tiene_Palabra_clave
+AFTER DELETE OR UPDATE ON Archivo_tiene_Palabra_clave
 FOR EACH ROW
 EXECUTE FUNCTION borrar_palabra_si_no_usada();
