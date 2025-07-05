@@ -1,9 +1,9 @@
 -- =========================================
--- 1. Función: Archivos según extensión
+-- 1. Función: Buscar Archivos según extensión
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_extension(VARCHAR);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_extension(VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_extension(extension_deseada VARCHAR)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_extension(extension_deseada VARCHAR)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -16,11 +16,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 2. Función: Archivos según ubicación
+-- 2. Función: Buscar Archivos según ubicación
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_ubicacion(VARCHAR);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_ubicacion(VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_ubicacion(ubicacion_deseada VARCHAR)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_ubicacion(ubicacion_deseada VARCHAR)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -33,11 +33,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 3. Función: Archivos según categoría
+-- 3. Función: Buscar Archivos según categoría
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_categoria(VARCHAR);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_categoria(VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_categoria(categoria_deseada VARCHAR)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_categoria(categoria_deseada VARCHAR)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -51,11 +51,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 4. Función: Archivos según etiqueta
+-- 4. Función: Buscar Archivos según etiqueta
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_etiqueta(VARCHAR);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_etiqueta(VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_etiqueta(etiqueta_deseada VARCHAR)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_etiqueta(etiqueta_deseada VARCHAR)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -70,11 +70,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 5. Función: Archivos según palabras clave (VARIADIC)
+-- 5. Función: Buscar Archivos según palabras clave
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_palabra_clave(VARIADIC VARCHAR[]);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_palabra_clave(VARIADIC VARCHAR[]);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_palabra_clave(VARIADIC palabras_deseadas VARCHAR[])
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_palabra_clave(VARIADIC palabras_deseadas VARCHAR[])
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -89,11 +89,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 6. Función: Archivos según tamaño
+-- 6. Función: Buscar Archivos según tamaño
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_tamano(INT, INT);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_tamano(INT, INT);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_tamano(tamano_minimo INT, tamano_maximo INT)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_tamano(tamano_minimo INT, tamano_maximo INT)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -108,9 +108,9 @@ $$ LANGUAGE plpgsql;
 -- =========================================
 -- 7. Función: Archivos cuyo nombre contiene patrón
 -- =========================================
-DROP FUNCTION IF EXISTS sp_archivo_segun_nombre(VARCHAR);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_nombre(VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_archivo_segun_nombre(patron VARCHAR)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_nombre(patron VARCHAR)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -201,7 +201,58 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 12. Función: Crear Etiqueta
+-- 12. Función: Eliminar Ubicación
+-- =========================================
+DROP FUNCTION IF EXISTS sp_eliminar_ubicacion(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_eliminar_ubicacion(ubicacion VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  PERFORM sp_eliminar_archivos_en_ubicacion(ubicacion);
+  
+  DELETE FROM Ubicacion
+  WHERE ubi_path = ubicacion;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 13. Función: Eliminar Archivos que estén en una ubicación específica
+-- =========================================
+
+DROP FUNCTION IF EXISTS sp_eliminar_archivos_en_ubicacion(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_eliminar_archivos_en_ubicacion(carpeta VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM Archivo
+  WHERE arc_id IN (
+    SELECT arc_id
+    FROM Archivo
+    JOIN Ubicacion ON arc_ubi_id = ubi_id
+    WHERE ubi_path = carpeta
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 14. Función: Eliminar Ubicaciones que no tengan archivos asociados
+-- =========================================
+DROP FUNCTION IF EXISTS sp_eliminar_ubicaciones_sin_archivos();
+
+CREATE OR REPLACE FUNCTION sp_eliminar_ubicaciones_sin_archivos()
+RETURNS VOID AS $$
+BEGIN 
+  DELETE FROM Ubicacion
+  WHERE ubi_id NOT IN(
+	SELECT ubi_id
+    FROM Ubicacion
+    JOIN Archivo ON ubi_id = arc_ubi_id
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 15. Función: Crear Etiqueta
 -- =========================================
 DROP FUNCTION IF EXISTS sp_crear_etiqueta(VARCHAR);
 
@@ -217,7 +268,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 13. Función: Asociar Etiqueta a Archivo
+-- 16. Función: Asociar Etiqueta a Archivo
 -- =========================================
 DROP FUNCTION IF EXISTS sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
@@ -249,7 +300,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 14. Función: Crear Palabra Clave
+-- 17. Función: Crear Palabra Clave
 -- =========================================
 DROP FUNCTION IF EXISTS sp_crear_palabra_clave(VARCHAR);
 
@@ -265,7 +316,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 15. Función: Asociar Palabra Clave a Archivo
+-- 18. Función: Asociar Palabra Clave a Archivo
 -- =========================================
 DROP FUNCTION IF EXISTS sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
@@ -292,5 +343,175 @@ BEGIN
     SELECT 1 FROM Archivo_tiene_Palabra_clave
     WHERE arcp_arc_id = id_archivo_asociar AND arcp_pal_id = id_palabra_asociar
   );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 19. Función: Actualizar ubicación con nombre nuevo de carpeta
+-- =========================================
+DROP FUNCTION IF EXISTS sp_actualizar_ubicacion_con_nombre_nuevo_carpeta(VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_actualizar_ubicacion_con_nombre_nuevo_carpeta(viejo_path VARCHAR, nuevo_path VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE Ubicacion
+  SET ubi_path = nuevo_path
+  WHERE ubi_path = viejo_path;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 20. Función: Crear Ubicación
+-- =========================================
+DROP FUNCTION IF EXISTS sp_crear_ubicacion(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_crear_ubicacion(nuevo_path VARCHAR)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO Ubicacion (ubi_path)
+  SELECT nuevo_path
+  WHERE NOT EXISTS (
+    SELECT 1 FROM Ubicacion WHERE ubi_path = nuevo_path
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 21. Función: Actualizar ubicación de archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_actualizar_archivo_ubicacion(viejo_path VARCHAR, nombre_archivo VARCHAR, extension VARCHAR, nuevo_path VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+  id_nueva_ubicacion INT;
+  id_archivo_actualizar INT;
+BEGIN
+  PERFORM sp_crear_ubicacion(nuevo_path);
+
+  SELECT ubi_id INTO id_nueva_ubicacion
+  FROM Ubicacion WHERE ubi_path = nuevo_path; 
+  
+  SELECT arc_id INTO id_archivo_actualizar
+  FROM Archivo
+  JOIN Ubicacion ON arc_ubi_id = ubi_id
+  JOIN Extension ON arc_ext_id = ext_id
+  WHERE ubi_path = viejo_path AND arc_nombre = nombre_archivo AND ext_extension = extension;
+  
+  UPDATE Archivo
+  SET arc_ubi_id = id_nueva_ubicacion
+  WHERE arc_id = id_archivo_actualizar;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 22. Función: Crear Archivo sin Categoría
+-- =========================================
+DROP FUNCTION IF EXISTS sp_crear_archivo_sin_categoria(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_crear_archivo_sin_categoria(nombre VARCHAR, tamano INT, fecha_modificacion DATE, carpeta VARCHAR, extension VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+  id_ubicacion INT;
+  id_extension INT;
+BEGIN
+  SELECT ubi_id INTO id_ubicacion
+  FROM Ubicacion WHERE ubi_path = carpeta; 
+  
+  SELECT ext_id INTO id_extension
+  FROM Extension WHERE ext_extension = extension; 
+
+  INSERT INTO Archivo (arc_nombre, arc_tamano, arc_fecha_modificacion, arc_ubi_id, arc_ext_id)
+  SELECT nombre, tamano, fecha_modificacion, id_ubicacion, id_extension
+  WHERE NOT EXISTS (
+    SELECT 1 FROM Archivo
+    WHERE arc_id IN(
+		SELECT arc_id
+        FROM Ubicacion
+        JOIN Archivo ON ubi_id = arc_ubi_id
+        JOIN Extension ON ext_id = arc_ext_id
+        WHERE ubi_id = id_ubicacion AND ext_id = id_extension AND arc_nombre = nombre
+    )
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 23. Función: Crear Archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_crear_archivo(nombre VARCHAR, tamano INT, fecha_modificacion DATE, carpeta VARCHAR, extension VARCHAR, categoria VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+  id_ubicacion INT;
+  id_extension INT;
+  id_categoria INT;
+BEGIN
+  SELECT ubi_id INTO id_ubicacion
+  FROM Ubicacion WHERE ubi_path = carpeta; 
+  
+  SELECT ext_id INTO id_extension
+  FROM Extension WHERE ext_extension = extension; 
+  
+  SELECT cat_id INTO id_categoria
+  FROM Categoria WHERE cat_nombre = categoria; 
+
+  INSERT INTO Archivo (arc_nombre, arc_tamano, arc_fecha_modificacion, arc_ubi_id, arc_ext_id, arc_cat_id)
+  SELECT nombre, tamano, fecha_modificacion, id_ubicacion, id_extension, id_categoria
+  WHERE NOT EXISTS (
+    SELECT 1 FROM Archivo
+    WHERE arc_id IN(
+		SELECT arc_id
+        FROM Ubicacion
+        JOIN Archivo ON ubi_id = arc_ubi_id
+        JOIN Extension ON ext_id = arc_ext_id
+        WHERE ubi_id = id_ubicacion AND ext_id = id_extension AND arc_nombre = nombre
+    )
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 24. Función: Actualizar nombre de archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_actualizar_nombre_archivo(carpeta VARCHAR, viejo_nombre VARCHAR, extension VARCHAR, nuevo_nombre VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+  id_archivo_actualizar INT;
+BEGIN
+  SELECT arc_id INTO id_archivo_actualizar
+  FROM Archivo
+  JOIN Ubicacion ON arc_ubi_id = ubi_id
+  JOIN Extension ON arc_ext_id = ext_id
+  WHERE ubi_path = carpeta AND arc_nombre = viejo_nombre AND ext_extension = extension;
+  
+  UPDATE Archivo
+  SET arc_nombre = nuevo_nombre
+  WHERE arc_id = id_archivo_actualizar;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 25. Función: Actualizar tamaño y fecha de modificación de archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_actualizar_tamano_fecha_modificacion_archivo(carpeta VARCHAR, nombre_archivo VARCHAR, extension VARCHAR, nuevo_tamano INT, nueva_fecha_modificacion DATE)
+RETURNS VOID AS $$
+DECLARE
+  id_archivo_actualizar INT;
+BEGIN
+  SELECT arc_id INTO id_archivo_actualizar
+  FROM Archivo
+  JOIN Ubicacion ON arc_ubi_id = ubi_id
+  JOIN Extension ON arc_ext_id = ext_id
+  WHERE ubi_path = carpeta AND arc_nombre = nombre_archivo AND ext_extension = extension;
+  
+  UPDATE Archivo
+  SET arc_tamano = nuevo_tamano, arc_fecha_modificacion = nueva_fecha_modificacion
+  WHERE arc_id = id_archivo_actualizar;
 END;
 $$ LANGUAGE plpgsql;
