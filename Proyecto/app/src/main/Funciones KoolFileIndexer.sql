@@ -72,9 +72,9 @@ $$ LANGUAGE plpgsql;
 -- =========================================
 -- 5. Función: Buscar Archivos según palabras clave
 -- =========================================
-DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_palabra_clave(VARIADIC VARCHAR[]);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_palabra_clave(VARCHAR[]);
 
-CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_palabra_clave(VARIADIC palabras_deseadas VARCHAR[])
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_palabra_clave(palabras_deseadas VARCHAR[])
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
