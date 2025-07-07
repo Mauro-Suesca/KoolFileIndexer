@@ -1,6 +1,9 @@
 -- =========================================
--- SCHEMA KoolFileIndexer - PostgreSQL
+-- KoolFileIndexer - PostgreSQL
 -- =========================================
+
+CREATE DATABASE KoolFileIndexer
+    ENCODING = UTF8
 
 -- Eliminar tablas si existen
 DROP TABLE IF EXISTS Categoria_tiene_Archivo,
@@ -16,7 +19,7 @@ DROP TABLE IF EXISTS Categoria_tiene_Archivo,
 -- Tabla Extension
 -- ========================
 CREATE TABLE Extension (
-    ext_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    ext_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     ext_extension VARCHAR(10) NOT NULL UNIQUE
 );
 
@@ -24,7 +27,7 @@ CREATE TABLE Extension (
 -- Tabla Etiqueta
 -- ========================
 CREATE TABLE Etiqueta (
-    eti_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    eti_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     eti_nombre VARCHAR(45) NOT NULL UNIQUE
 );
 
@@ -32,7 +35,7 @@ CREATE TABLE Etiqueta (
 -- Tabla Ubicacion
 -- ========================
 CREATE TABLE Ubicacion (
-    ubi_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    ubi_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     ubi_path VARCHAR(100) NOT NULL UNIQUE
 );
 
@@ -40,7 +43,7 @@ CREATE TABLE Ubicacion (
 -- Tabla Archivo
 -- ========================
 CREATE TABLE Archivo (
-    arc_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    arc_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     arc_nombre VARCHAR(45) NOT NULL,
     arc_tamano INTEGER NOT NULL, -- Bytes
     arc_fecha_modificacion DATE NOT NULL,
@@ -62,7 +65,7 @@ CREATE INDEX idx_arc_ubi_id ON Archivo (arc_ubi_id);
 -- Tabla Palabra_clave
 -- ========================
 CREATE TABLE Palabra_clave (
-    pal_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    pal_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     pal_palabra VARCHAR(45) NOT NULL UNIQUE
 );
 
@@ -86,7 +89,7 @@ CREATE INDEX idx_arcp_arc_id ON Archivo_tiene_Palabra_clave (arcp_arc_id);
 -- Tabla Categoria
 -- ========================
 CREATE TABLE Categoria (
-    cat_id INTEGER NOT NULL DEFAULT 0 PRIMARY KEY,
+    cat_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     cat_nombre VARCHAR(45) NOT NULL UNIQUE
 );
 
