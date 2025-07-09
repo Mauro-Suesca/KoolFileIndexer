@@ -10,10 +10,10 @@ public class File {
     private String[] tags;
 
     // Constructor is private for mockup reasons
-    private File() {
-        this.name = "file1";
+    private File(String name) {
+        this.name = name;
         this.extension = "txt";
-        this.path = "/home/user/file1.txt";
+        this.path = "/home/user/" + name + ".txt";
         this.modifiedDate = "12/2/2002";
         this.size = 1820;
         this.tags = new String[] { "Plain Text Document", "Vacations" };
@@ -35,8 +35,8 @@ public class File {
         this.tags = tags;
     }
 
-    public static File getMockupInstance() {
-        return new File();
+    public static File getMockupInstance(String name) {
+        return new File(name);
     }
 
     public String getName() {

@@ -1,5 +1,6 @@
 package koolfileindexer.ui.components;
 
+import java.util.function.Consumer;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -12,10 +13,13 @@ import javafx.scene.layout.Priority;
 public class SearchComponent extends HBox {
 
     private TextField searchBar = new TextField();
+    private Consumer<String> searchCB;
 
     // constructor
-    public SearchComponent() {
+    public SearchComponent(Consumer<String> searchCB) {
         super(10);
+        this.searchCB = searchCB;
+
         Label label = new Label("Search");
         this.getChildren().add(label);
 
@@ -37,7 +41,6 @@ public class SearchComponent extends HBox {
 
     private void executeSearch() {
         String search = this.searchBar.getText();
-        // TODO: Run "backend"
-        System.out.println("Search for " + search);
+        this.searchCB.accept(search);
     }
 }
