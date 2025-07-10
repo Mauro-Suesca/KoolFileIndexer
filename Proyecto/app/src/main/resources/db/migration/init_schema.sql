@@ -21,7 +21,15 @@ CREATE TABLE Extension (
 -- ========================
 CREATE TABLE Etiqueta (
     eti_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    eti_nombre VARCHAR(45) NOT NULL UNIQUE
+    eti_nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- ========================
+-- Tabla Categoria
+-- ========================
+CREATE TABLE Categoria (
+    cat_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    cat_nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- ========================
@@ -29,12 +37,12 @@ CREATE TABLE Etiqueta (
 -- ========================
 CREATE TABLE Archivo (
     arc_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    arc_nombre VARCHAR(45) NOT NULL,
+    arc_nombre VARCHAR(50) NOT NULL,
     arc_tamano INTEGER NOT NULL, -- Bytes
     arc_fecha_modificacion DATE NOT NULL,
     arc_path VARCHAR(100) NOT NULL,
     arc_ext_id INTEGER NOT NULL,
-    arc_cat_id INTEGER,
+    arc_cat_id INTEGER NOT NULL,
 
     FOREIGN KEY (arc_ext_id) REFERENCES Extension (ext_id),
     FOREIGN KEY (arc_cat_id) REFERENCES Categoria (cat_id)
@@ -50,7 +58,7 @@ CREATE UNIQUE INDEX idx_arc_nombre_completo ON Archivo (arc_path, arc_nombre, ar
 -- ========================
 CREATE TABLE Palabra_clave (
     pal_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    pal_palabra VARCHAR(45) NOT NULL UNIQUE
+    pal_palabra VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- ========================
@@ -68,14 +76,6 @@ CREATE TABLE Archivo_Palabra_clave (
 
 CREATE INDEX idx_arcp_pal_id ON Archivo_Palabra_clave (arcp_pal_id);
 CREATE INDEX idx_arcp_arc_id ON Archivo_Palabra_clave (arcp_arc_id);
-
--- ========================
--- Tabla Categoria
--- ========================
-CREATE TABLE Categoria (
-    cat_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    cat_nombre VARCHAR(45) NOT NULL UNIQUE
-);
 
 -- ========================
 -- Tabla Etiqueta_Archivo
