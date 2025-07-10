@@ -90,37 +90,6 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean crearArchivoSinCategoria(Archivo nuevo_archivo) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
-            "{PERFORM sp_crear_archivo_sin_categoria (?, ?, ?, ?, ?)}";
-
-        try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
-
-            statement_a_ejecutar.setString(1, nuevo_archivo.nombre);
-            statement_a_ejecutar.setLong(2, nuevo_archivo.tamanoBytes);
-
-            java.sql.Date fecha_modificacion_en_sql = java.sql.Date.valueOf(
-                nuevo_archivo.fechaCreacion.toLocalDate()
-            );
-            statement_a_ejecutar.setDate(3, fecha_modificacion_en_sql);
-
-            statement_a_ejecutar.setString(4, nuevo_archivo.rutaCompleta);
-            statement_a_ejecutar.setString(5, nuevo_archivo.extension);
-
-            statement_a_ejecutar.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
-    }
-
     public static boolean actualizarNombreArchivo(
         Archivo archivo_modificar,
         String viejo_nombre
@@ -172,6 +141,33 @@ public class ConectorBasedeDatos {
                 archivo_modificar.fechaCreacion.toLocalDate()
             );
             statement_a_ejecutar.setDate(5, fecha_modificacion_en_sql);
+
+            statement_a_ejecutar.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean actualizarCategoriaArchivo(
+        Archivo archivo_modificar
+    ) {
+        CallableStatement statement_a_ejecutar = null;
+        final String string_comando_a_ejecutar =
+            "{PERFORM sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
+
+        try {
+            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
+                string_comando_a_ejecutar,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            statement_a_ejecutar.setString(1, archivo_modificar.rutaCompleta);
+            statement_a_ejecutar.setString(2, archivo_modificar.nombre);
+            statement_a_ejecutar.setString(3, archivo_modificar.extension);
+            statement_a_ejecutar.setString(4, archivo_modificar.categoria);
 
             statement_a_ejecutar.execute();
         } catch (SQLException e) {
