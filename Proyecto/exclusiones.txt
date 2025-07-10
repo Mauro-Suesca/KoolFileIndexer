@@ -1,0 +1,11 @@
+C:\Windows
+C:\Program Files
+C:\Program Files (x86)
+C:\System Volume Information
+
+.exe
+.dll
+.sys
+
+/proc
+/sys
