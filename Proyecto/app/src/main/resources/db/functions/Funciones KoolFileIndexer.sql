@@ -333,34 +333,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 19. Función: Crear Archivo sin Categoría
--- =========================================
-DROP FUNCTION IF EXISTS sp_crear_archivo_sin_categoria(VARCHAR, INT, DATE, VARCHAR, VARCHAR);
-
-CREATE OR REPLACE FUNCTION sp_crear_archivo_sin_categoria(nombre VARCHAR, tamano INT, fecha_modificacion DATE, carpeta VARCHAR, extension VARCHAR)
-RETURNS VOID AS $$
-DECLARE
-  id_extension INT;
-BEGIN
-  SELECT ext_id INTO id_extension
-  FROM Extension WHERE ext_extension = extension; 
-
-  INSERT INTO Archivo (arc_nombre, arc_tamano, arc_fecha_modificacion, arc_path, arc_ext_id)
-  SELECT nombre, tamano, fecha_modificacion, carpeta, id_extension
-  WHERE NOT EXISTS (
-    SELECT 1 FROM Archivo
-    WHERE arc_id IN(
-		SELECT arc_id
-        FROM Archivo
-        JOIN Extension ON ext_id = arc_ext_id
-        WHERE arc_path = carpeta AND ext_id = id_extension AND arc_nombre = nombre
-    )
-  );
-END;
-$$ LANGUAGE plpgsql;
-
--- =========================================
--- 20. Función: Crear Archivo
+-- 19. Función: Crear Archivo
 -- =========================================
 DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR);
 
@@ -391,7 +364,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 21. Función: Actualizar nombre de archivo
+-- 20. Función: Actualizar nombre de archivo
 -- =========================================
 DROP FUNCTION IF EXISTS sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
@@ -412,7 +385,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================
--- 22. Función: Actualizar tamaño y fecha de modificación de archivo
+-- 21. Función: Actualizar tamaño y fecha de modificación de archivo
 -- =========================================
 DROP FUNCTION IF EXISTS sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, VARCHAR);
 
@@ -428,6 +401,32 @@ BEGIN
   
   UPDATE Archivo
   SET arc_tamano = nuevo_tamano, arc_fecha_modificacion = nueva_fecha_modificacion
+  WHERE arc_id = id_archivo_actualizar;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================
+-- 22. Función: Actualizar categoría de archivo
+-- =========================================
+DROP FUNCTION IF EXISTS sp_actualizar_categoria_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_actualizar_categoria_archivo(carpeta VARCHAR, nombre VARCHAR, extension VARCHAR, nueva_categoria VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+  id_archivo_actualizar INT;
+  id_categoria_nueva INT;
+BEGIN
+  SELECT arc_id INTO id_archivo_actualizar
+  FROM Archivo
+  JOIN Extension ON arc_ext_id = ext_id
+  WHERE arc_path = carpeta AND arc_nombre = nombre AND ext_extension = extension;
+
+  SELECT cat_id INTO id_categoria_nueva
+  FROM Categoria
+  WHERE cat_nombre = nueva_categoria;
+  
+  UPDATE Archivo
+  SET arc_cat_id = id_categoria_nueva
   WHERE arc_id = id_archivo_actualizar;
 END;
 $$ LANGUAGE plpgsql;
