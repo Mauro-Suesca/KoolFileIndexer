@@ -1,10 +1,3 @@
--- =========================================
--- KoolFileIndexer - PostgreSQL
--- =========================================
-
-CREATE DATABASE KoolFileIndexer
-    ENCODING = UTF8
-
 -- Eliminar tablas si existen
 DROP TABLE IF EXISTS Categoria_tiene_Archivo,
                     Categoria,
