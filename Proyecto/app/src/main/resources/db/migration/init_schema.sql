@@ -1,11 +1,11 @@
 -- Eliminar tablas si existen
 DROP TABLE IF EXISTS 
-    Categoria,
     Archivo_Palabra_clave,
+    Etiqueta_Archivo,
     Palabra_clave,
     Archivo,
     Etiqueta,
-    Etiqueta_Archivo,
+    Categoria,
     Extension;
 
 -- ========================
@@ -41,11 +41,8 @@ CREATE TABLE Archivo (
     arc_tamano INTEGER NOT NULL, -- Bytes
     arc_fecha_modificacion DATE NOT NULL,
     arc_path VARCHAR(100) NOT NULL,
-    arc_ext_id INTEGER NOT NULL,
-    arc_cat_id INTEGER NOT NULL,
-
-    FOREIGN KEY (arc_ext_id) REFERENCES Extension (ext_id),
-    FOREIGN KEY (arc_cat_id) REFERENCES Categoria (cat_id)
+    arc_ext_id INTEGER NOT NULL REFERENCES Extension (ext_id),
+    arc_cat_id INTEGER NOT NULL REFERENCES Categoria (cat_id)
 );
 
 -- Índices auxiliares
@@ -65,13 +62,9 @@ CREATE TABLE Palabra_clave (
 -- Tabla Archivo_Palabra_clave
 -- ========================
 CREATE TABLE Archivo_Palabra_clave (
-    arcp_arc_id INTEGER NOT NULL,
-    arcp_pal_id INTEGER NOT NULL,
-    
-    PRIMARY KEY (arcp_pal_id, arcp_arc_id),
-    FOREIGN KEY (arcp_arc_id) REFERENCES Archivo (arc_id),
-    FOREIGN KEY (arcp_pal_id) REFERENCES Palabra_clave (pal_id)
-    ON DELETE CASCADE
+    arcp_arc_id INTEGER NOT NULL REFERENCES Archivo (arc_id) ON DELETE CASCADE,
+    arcp_pal_id INTEGER NOT NULL REFERENCES Palabra_clave (pal_id) ON DELETE CASCADE,
+    PRIMARY KEY (arcp_pal_id, arcp_arc_id)
 );
 
 CREATE INDEX idx_arcp_pal_id ON Archivo_Palabra_clave (arcp_pal_id);
@@ -81,13 +74,9 @@ CREATE INDEX idx_arcp_arc_id ON Archivo_Palabra_clave (arcp_arc_id);
 -- Tabla Etiqueta_Archivo
 -- ========================
 CREATE TABLE Etiqueta_Archivo (
-    etia_eti_id INTEGER NOT NULL,
-    etia_arc_id INTEGER NOT NULL,
-    
-    PRIMARY KEY (etia_arc_id, etia_eti_id),
-    FOREIGN KEY (etia_eti_id) REFERENCES Etiqueta (eti_id),
-    FOREIGN KEY (etia_arc_id) REFERENCES Archivo (arc_id)
-    ON DELETE CASCADE
+    etia_eti_id INTEGER NOT NULL REFERENCES Etiqueta (eti_id) ON DELETE CASCADE,
+    etia_arc_id INTEGER NOT NULL REFERENCES Archivo (arc_id) ON DELETE CASCADE,
+    PRIMARY KEY (etia_arc_id, etia_eti_id)
 );
 
 CREATE INDEX idx_etia_eti_id ON Etiqueta_Archivo (etia_eti_id);
@@ -96,8 +85,7 @@ CREATE INDEX idx_etia_arc_id ON Etiqueta_Archivo (etia_arc_id);
 -- ========================
 -- TRIGGER 1: Borrar Etiqueta si ningún Archivo la usa
 -- ========================
-CREATE OR REPLACE FUNCTION borrar_etiqueta_si_no_usada()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION borrar_etiqueta_si_no_usada() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM Etiqueta_Archivo WHERE etia_eti_id = OLD.etia_eti_id
@@ -105,8 +93,7 @@ BEGIN
         DELETE FROM Etiqueta WHERE eti_id = OLD.etia_eti_id;
     END IF;
     RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_borrar_etiqueta
 AFTER DELETE OR UPDATE ON Etiqueta_Archivo
@@ -116,8 +103,7 @@ EXECUTE FUNCTION borrar_etiqueta_si_no_usada();
 -- ========================
 -- TRIGGER 2: Borrar Palabra_clave si ya no está asociada
 -- ========================
-CREATE OR REPLACE FUNCTION borrar_palabra_si_no_usada()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION borrar_palabra_si_no_usada() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM Archivo_Palabra_clave WHERE arcp_pal_id = OLD.arcp_pal_id
@@ -125,10 +111,13 @@ BEGIN
         DELETE FROM Palabra_clave WHERE pal_id = OLD.arcp_pal_id;
     END IF;
     RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_borrar_palabra
 AFTER DELETE OR UPDATE ON Archivo_Palabra_clave
 FOR EACH ROW
 EXECUTE FUNCTION borrar_palabra_si_no_usada();
+
+CREATE USER usuario_final WITH PASSWORD 'Koo1FileIndexer';
+GRANT ALL PRIVILEGES ON DATABASE KoolFileIndexer TO usuario_final;
+GRANT USAGE ON SCHEMA public TO usuario_final;
