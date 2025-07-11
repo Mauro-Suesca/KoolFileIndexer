@@ -6,13 +6,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
 
 public class ConectorBasedeDatos {
 
     private static final String JDBC_URL =
         "jdbc:postgresql://localhost:5432/KoolFileIndexer";
-    private static final String USUARIO = "";
-    private static final String CONTRASENA = "";
+    private static final String USUARIO = "usuario_final";
+    private static final String CONTRASENA = "Koo1FileIndexer";
     private static Connection conexion_base_de_datos;
 
     public static String iniciar_conexion() {
@@ -201,7 +202,131 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static ResultSet buscarArchivosPorFiltro(
+    public static ResultSet buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
+        Archivo lista_filtros,
+        long tamano_minimo,
+        long tamano_maximo
+    ) {
+        ResultSet resultado_consulta = null;
+        CallableStatement statement_a_ejecutar = null;
+        boolean ocurrieron_errores = false;
+        String string_comando_a_ejecutar =
+            "{SELECT ubi_path || '/' || arc_nombre || '.' || ext_extension FROM ";
+
+        if (lista_filtros.extension != null) {
+            string_comando_a_ejecutar +=
+                "sp_buscar_archivos_segun_extension (?) ";
+        }
+        if (lista_filtros.rutaCompleta != null) {
+            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar +=
+                "sp_buscar_archivos_segun_ubicacion (?) ";
+        }
+        if (lista_filtros.categoria != null) {
+            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar +=
+                "sp_buscar_archivos_segun_categoria (?) ";
+        }
+        if (lista_filtros.etiquetas != null) {
+            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar +=
+                "sp_buscar_archivos_segun_etiqueta (?) ";
+        }
+        if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
+            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar +=
+                "sp_buscar_archivos_segun_tamano (?, ?) ";
+        }
+        if (lista_filtros.nombre != null) {
+            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += "sp_buscar_archivos_segun_nombre (?) ";
+        }
+
+        if (lista_filtros.palabrasClave != null) {
+            Iterator<String> iterador_palabras_clave = lista_filtros.palabrasClave.iterator();
+            while(iterador_palabras_clave.hasNext()){
+                string_comando_a_ejecutar += "INTERSECT ";
+                string_comando_a_ejecutar +=
+                "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
+                iterador_palabras_clave.next();
+            }
+        }
+
+        string_comando_a_ejecutar += "}";
+
+        try {
+            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
+                string_comando_a_ejecutar,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            int iterador_parametro = 1;
+            if (lista_filtros.extension != null) {
+                statement_a_ejecutar.setString(
+                    iterador_parametro,
+                    lista_filtros.extension
+                );
+                iterador_parametro++;
+            }
+            if (lista_filtros.rutaCompleta != null) {
+                statement_a_ejecutar.setString(
+                    iterador_parametro,
+                    lista_filtros.rutaCompleta
+                );
+                iterador_parametro++;
+            }
+            if (lista_filtros.categoria != null) {
+                statement_a_ejecutar.setString(
+                    iterador_parametro,
+                    lista_filtros.categoria
+                );
+                iterador_parametro++;
+            }
+            if (lista_filtros.etiquetas != null) {
+                statement_a_ejecutar.setString(
+                    iterador_parametro,
+                    lista_filtros.etiquetas.get(0)
+                );
+                iterador_parametro++;
+            }
+            if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
+                statement_a_ejecutar.setLong(iterador_parametro, tamano_minimo);
+                statement_a_ejecutar.setLong(iterador_parametro, tamano_maximo);
+                iterador_parametro += 2;
+            }
+            if (lista_filtros.nombre != null) {
+                statement_a_ejecutar.setString(
+                    iterador_parametro,
+                    lista_filtros.nombre
+                );
+                iterador_parametro++;
+            }
+            if (lista_filtros.palabrasClave != null) {
+                Iterator<String> iterador_palabras_clave = lista_filtros.palabrasClave.iterator();
+                while(iterador_palabras_clave.hasNext()){
+                    statement_a_ejecutar.setString(
+                        iterador_parametro++,
+                        iterador_palabras_clave.next()
+                    );
+                }
+            }
+
+            statement_a_ejecutar.execute();
+
+            resultado_consulta = statement_a_ejecutar.getResultSet();
+        } catch (SQLException e) {
+            ocurrieron_errores = true;
+        }
+
+        if (ocurrieron_errores) {
+            return null;
+        } else {
+            return resultado_consulta;
+        }
+    }
+
+    public static ResultSet buscarArchivosPorFiltroMinimoUnaPalabraClave(
         Archivo lista_filtros,
         long tamano_minimo,
         long tamano_maximo
@@ -235,7 +360,7 @@ public class ConectorBasedeDatos {
         if (lista_filtros.palabrasClave != null) {
             string_comando_a_ejecutar += "INTERSECT ";
             string_comando_a_ejecutar +=
-                "sp_buscar_archivos_segun_palabra_clave (?) ";
+                "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
         }
         if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
             string_comando_a_ejecutar += "INTERSECT ";
