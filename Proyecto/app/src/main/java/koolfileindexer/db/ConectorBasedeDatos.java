@@ -10,13 +10,29 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 public class ConectorBasedeDatos {
-    private static final String JDBC_URL =
-        "jdbc:postgresql://localhost:5432/KoolFileIndexer";
-    private static final String USUARIO = "kool_user";
-    private static final String CONTRASENA = "koolpass";
-    private static Connection conexion;
+    private static volatile ConectorBasedeDatos instancia;
 
-    public static synchronized Connection obtenerConexion() throws SQLException{
+    private final String JDBC_URL =
+        "jdbc:postgresql://localhost:5432/KoolFileIndexer";
+    private final String USUARIO = "kool_user";
+    private final String CONTRASENA = "koolpass";
+    private Connection conexion;
+
+    public static ConectorBasedeDatos obtenerInstancia(){
+        ConectorBasedeDatos resultado = instancia;
+        
+        if(resultado != null){
+            return resultado;
+        }
+        synchronized(ConectorBasedeDatos.class){
+            if(instancia == null){
+                instancia = new ConectorBasedeDatos();
+            }
+            return instancia;
+        }
+    }
+
+    public synchronized Connection obtenerConexion() throws SQLException{
         try {
             if (conexion == null || conexion.isClosed()) {
                 conexion = DriverManager.getConnection(
@@ -32,7 +48,7 @@ public class ConectorBasedeDatos {
         return conexion;
     }
 
-    public static void terminarConexion() {
+    public void terminarConexion() {
         try {
             if (
                 conexion != null &&
@@ -45,7 +61,7 @@ public class ConectorBasedeDatos {
         }
     }
 
-    public static boolean crearArchivo(Archivo nuevoArchivo) {
+    public boolean crearArchivo(Archivo nuevoArchivo) {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
@@ -77,7 +93,7 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean actualizarNombreArchivo(
+    public boolean actualizarNombreArchivo(
         Archivo archivoParaModificar,
         String viejo_nombre
     ) {
@@ -105,7 +121,7 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean actualizarTamanoFechaModificacionArchivo(
+    public boolean actualizarTamanoFechaModificacionArchivo(
         Archivo archivoParaModificar
     ) {
         CallableStatement sentenciaEjecutable = null;
@@ -137,7 +153,7 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean actualizarCategoriaArchivo(
+    public boolean actualizarCategoriaArchivo(
         Archivo archivoParaModificar
     ) {
         CallableStatement sentenciaEjecutable = null;
@@ -164,7 +180,7 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean eliminarArchivo(Archivo archivoParaEliminar) {
+    public boolean eliminarArchivo(Archivo archivoParaEliminar) {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_archivo (?, ?, ?)}";
@@ -188,7 +204,7 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static ResultSet buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
+    public ResultSet buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
@@ -314,7 +330,7 @@ public class ConectorBasedeDatos {
         }
     }
 
-    public static ResultSet buscarArchivosPorFiltroMinimoUnaPalabraClave(
+    public ResultSet buscarArchivosPorFiltroMinimoUnaPalabraClave(
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
