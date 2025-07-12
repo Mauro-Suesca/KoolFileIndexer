@@ -7,8 +7,8 @@ import koolfileindexer.db.ConectorBasedeDatos;
 public class App {
 
   public static void main(String[] args) throws SQLException {
-    try (Connection conexion_base_de_datos = ConectorBasedeDatos.obtenerConexion()) {
-		if (conexion_base_de_datos != null) {
+    try (Connection conexion = ConectorBasedeDatos.obtenerConexion()) {
+		if (conexion != null) {
 			System.out.println("Conexión exitosa a PostgreSQL");
 		}
 	} catch (SQLException e) {

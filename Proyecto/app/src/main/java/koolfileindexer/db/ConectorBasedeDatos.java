@@ -14,12 +14,12 @@ public class ConectorBasedeDatos {
         "jdbc:postgresql://localhost:5432/KoolFileIndexer";
     private static final String USUARIO = "kool_user";
     private static final String CONTRASENA = "koolpass";
-    private static Connection conexion_base_de_datos;
+    private static Connection conexion;
 
     public static synchronized Connection obtenerConexion() throws SQLException{
         try {
-            if (conexion_base_de_datos == null || conexion_base_de_datos.isClosed()) {
-                conexion_base_de_datos = DriverManager.getConnection(
+            if (conexion == null || conexion.isClosed()) {
+                conexion = DriverManager.getConnection(
                     JDBC_URL,
                     USUARIO,
                     CONTRASENA
@@ -28,47 +28,48 @@ public class ConectorBasedeDatos {
         } catch (SQLException e) {
             throw new SQLException("Error al obtener la conexión", e);
         }
-        return conexion_base_de_datos;
+
+        return conexion;
     }
 
     public static void terminarConexion() {
         try {
             if (
-                conexion_base_de_datos != null &&
-                !conexion_base_de_datos.isClosed()
+                conexion != null &&
+                !conexion.isClosed()
             ) {
-                conexion_base_de_datos.close();
+                conexion.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static boolean crearArchivo(Archivo nuevo_archivo) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
+    public static boolean crearArchivo(Archivo nuevoArchivo) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
             "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            statement_a_ejecutar.setString(1, nuevo_archivo.nombre);
-            statement_a_ejecutar.setLong(2, nuevo_archivo.tamanoBytes);
+            sentenciaEjecutable.setString(1, nuevoArchivo.nombre);
+            sentenciaEjecutable.setLong(2, nuevoArchivo.tamanoBytes);
 
-            java.sql.Date fecha_modificacion_en_sql = java.sql.Date.valueOf(
-                nuevo_archivo.fechaCreacion.toLocalDate()
+            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
+                nuevoArchivo.fechaCreacion.toLocalDate()
             );
-            statement_a_ejecutar.setDate(3, fecha_modificacion_en_sql);
+            sentenciaEjecutable.setDate(3, fechaModificacionParaSql);
 
-            statement_a_ejecutar.setString(4, nuevo_archivo.rutaCompleta);
-            statement_a_ejecutar.setString(5, nuevo_archivo.extension);
-            statement_a_ejecutar.setString(6, nuevo_archivo.categoria);
+            sentenciaEjecutable.setString(4, nuevoArchivo.rutaCompleta);
+            sentenciaEjecutable.setString(5, nuevoArchivo.extension);
+            sentenciaEjecutable.setString(6, nuevoArchivo.categoria);
 
-            statement_a_ejecutar.execute();
+            sentenciaEjecutable.execute();
         } catch (SQLException e) {
             return false;
         }
@@ -77,26 +78,26 @@ public class ConectorBasedeDatos {
     }
 
     public static boolean actualizarNombreArchivo(
-        Archivo archivo_modificar,
+        Archivo archivoParaModificar,
         String viejo_nombre
     ) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
             "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            statement_a_ejecutar.setString(1, archivo_modificar.rutaCompleta);
-            statement_a_ejecutar.setString(2, viejo_nombre);
-            statement_a_ejecutar.setString(3, archivo_modificar.extension);
-            statement_a_ejecutar.setString(4, archivo_modificar.nombre);
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, viejo_nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, archivoParaModificar.nombre);
 
-            statement_a_ejecutar.execute();
+            sentenciaEjecutable.execute();
         } catch (SQLException e) {
             return false;
         }
@@ -105,30 +106,30 @@ public class ConectorBasedeDatos {
     }
 
     public static boolean actualizarTamanoFechaModificacionArchivo(
-        Archivo archivo_modificar
+        Archivo archivoParaModificar
     ) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
             "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            statement_a_ejecutar.setString(1, archivo_modificar.rutaCompleta);
-            statement_a_ejecutar.setString(2, archivo_modificar.nombre);
-            statement_a_ejecutar.setString(3, archivo_modificar.extension);
-            statement_a_ejecutar.setLong(4, archivo_modificar.tamanoBytes);
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setLong(4, archivoParaModificar.tamanoBytes);
 
-            java.sql.Date fecha_modificacion_en_sql = java.sql.Date.valueOf(
-                archivo_modificar.fechaCreacion.toLocalDate()
+            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
+                archivoParaModificar.fechaCreacion.toLocalDate()
             );
-            statement_a_ejecutar.setDate(5, fecha_modificacion_en_sql);
+            sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
 
-            statement_a_ejecutar.execute();
+            sentenciaEjecutable.execute();
         } catch (SQLException e) {
             return false;
         }
@@ -137,25 +138,25 @@ public class ConectorBasedeDatos {
     }
 
     public static boolean actualizarCategoriaArchivo(
-        Archivo archivo_modificar
+        Archivo archivoParaModificar
     ) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
             "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            statement_a_ejecutar.setString(1, archivo_modificar.rutaCompleta);
-            statement_a_ejecutar.setString(2, archivo_modificar.nombre);
-            statement_a_ejecutar.setString(3, archivo_modificar.extension);
-            statement_a_ejecutar.setString(4, archivo_modificar.categoria);
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, archivoParaModificar.categoria);
 
-            statement_a_ejecutar.execute();
+            sentenciaEjecutable.execute();
         } catch (SQLException e) {
             return false;
         }
@@ -163,23 +164,23 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public static boolean eliminarArchivo(Archivo archivo_eliminar) {
-        CallableStatement statement_a_ejecutar = null;
-        final String string_comando_a_ejecutar =
+    public static boolean eliminarArchivo(Archivo archivoParaEliminar) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
             "{CALL sp_eliminar_archivo (?, ?, ?)}";
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            statement_a_ejecutar.setString(1, archivo_eliminar.rutaCompleta);
-            statement_a_ejecutar.setString(2, archivo_eliminar.nombre);
-            statement_a_ejecutar.setString(3, archivo_eliminar.extension);
+            sentenciaEjecutable.setString(1, archivoParaEliminar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaEliminar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaEliminar.extension);
 
-            statement_a_ejecutar.execute();
+            sentenciaEjecutable.execute();
         } catch (SQLException e) {
             return false;
         }
@@ -188,252 +189,252 @@ public class ConectorBasedeDatos {
     }
 
     public static ResultSet buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
-        Archivo lista_filtros,
-        long tamano_minimo,
-        long tamano_maximo
+        Archivo archivoFiltro,
+        long tamanoMinimo,
+        long tamanoMaximo
     ) {
-        ResultSet resultado_consulta = null;
-        PreparedStatement statement_a_ejecutar = null;
-        boolean ocurrieron_errores = false, es_primer_comando = true;
-        String string_comando_a_ejecutar =
+        ResultSet resultadoConsulta = null;
+        PreparedStatement sentenciaEjecutable = null;
+        boolean ocurrieronErrores = false, esPrimerComando = true;
+        String consultaSqlDinamica =
             "SELECT * FROM ";
 
-        if (lista_filtros.extension != null) {
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.extension != null) {
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_extension (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.rutaCompleta != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.rutaCompleta != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.categoria != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.categoria != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_categoria (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.etiquetas != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.etiquetas != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.nombre != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar += "sp_buscar_archivos_segun_nombre (?) ";
-            es_primer_comando = false;
+        if (archivoFiltro.nombre != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica += "sp_buscar_archivos_segun_nombre (?) ";
+            esPrimerComando = false;
         }
 
-        if (lista_filtros.palabrasClave != null) {
-            Iterator<String> iterador_palabras_clave = lista_filtros.palabrasClave.iterator();
-            while(iterador_palabras_clave.hasNext()){
-                string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-                string_comando_a_ejecutar +=
+        if (archivoFiltro.palabrasClave != null) {
+            Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
+            while(iteradorPalabrasClave.hasNext()){
+                consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+                consultaSqlDinamica +=
                 "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
-                iterador_palabras_clave.next();
+                iteradorPalabrasClave.next();
             }
         }
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                consultaSqlDinamica,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            int iterador_parametro = 1;
-            if (lista_filtros.extension != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.extension
+            int indiceParametro = 1;
+            if (archivoFiltro.extension != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.extension
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.rutaCompleta != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.rutaCompleta
+            if (archivoFiltro.rutaCompleta != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.rutaCompleta
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.categoria != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.categoria
+            if (archivoFiltro.categoria != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.categoria
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.etiquetas != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.etiquetas.get(0)
+            if (archivoFiltro.etiquetas != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.etiquetas.get(0)
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-                statement_a_ejecutar.setLong(iterador_parametro, tamano_minimo);
-                statement_a_ejecutar.setLong(iterador_parametro, tamano_maximo);
-                iterador_parametro += 2;
+            if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
+                sentenciaEjecutable.setLong(indiceParametro, tamanoMinimo);
+                sentenciaEjecutable.setLong(indiceParametro, tamanoMaximo);
+                indiceParametro += 2;
             }
-            if (lista_filtros.nombre != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.nombre
+            if (archivoFiltro.nombre != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.nombre
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.palabrasClave != null) {
-                Iterator<String> iterador_palabras_clave = lista_filtros.palabrasClave.iterator();
-                while(iterador_palabras_clave.hasNext()){
-                    statement_a_ejecutar.setString(
-                        iterador_parametro++,
-                        iterador_palabras_clave.next()
+            if (archivoFiltro.palabrasClave != null) {
+                Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
+                while(iteradorPalabrasClave.hasNext()){
+                    sentenciaEjecutable.setString(
+                        indiceParametro++,
+                        iteradorPalabrasClave.next()
                     );
                 }
             }
 
-            resultado_consulta = statement_a_ejecutar.executeQuery();
+            resultadoConsulta = sentenciaEjecutable.executeQuery();
         } catch (SQLException e) {
-            ocurrieron_errores = true;
+            ocurrieronErrores = true;
         }
 
-        if (ocurrieron_errores) {
+        if (ocurrieronErrores) {
             return null;
         } else {
-            return resultado_consulta;
+            return resultadoConsulta;
         }
     }
 
     public static ResultSet buscarArchivosPorFiltroMinimoUnaPalabraClave(
-        Archivo lista_filtros,
-        long tamano_minimo,
-        long tamano_maximo
+        Archivo archivoFiltro,
+        long tamanoMinimo,
+        long tamanoMaximo
     ) {
-        ResultSet resultado_consulta = null;
-        CallableStatement statement_a_ejecutar = null;
-        boolean ocurrieron_errores = false, es_primer_comando = true;
-        String string_comando_a_ejecutar =
+        ResultSet resultadoConsulta = null;
+        CallableStatement sentenciaEjecutable = null;
+        boolean ocurrieronErrores = false, esPrimerComando = true;
+        String consultaSqlDinamica =
             "SELECT * FROM ";
-        int iterador_parametro = 1;
+        int indiceParametro = 1;
 
-        if (lista_filtros.extension != null) {
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.extension != null) {
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_extension (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.rutaCompleta != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.rutaCompleta != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.categoria != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.categoria != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_categoria (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.etiquetas != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.etiquetas != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.palabrasClave != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if (archivoFiltro.palabrasClave != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar +=
+        if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica +=
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
-            es_primer_comando = false;
+            esPrimerComando = false;
         }
-        if (lista_filtros.nombre != null) {
-            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
-            string_comando_a_ejecutar += "sp_buscar_archivos_segun_nombre (?) ";
-            es_primer_comando = false;
+        if (archivoFiltro.nombre != null) {
+            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSqlDinamica += "sp_buscar_archivos_segun_nombre (?) ";
+            esPrimerComando = false;
         }
 
         try {
-            statement_a_ejecutar = conexion_base_de_datos.prepareCall(
-                string_comando_a_ejecutar,
+            sentenciaEjecutable = conexion.prepareCall(
+                consultaSqlDinamica,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            if (lista_filtros.extension != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.extension
+            if (archivoFiltro.extension != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.extension
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.rutaCompleta != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.rutaCompleta
+            if (archivoFiltro.rutaCompleta != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.rutaCompleta
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.categoria != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.categoria
+            if (archivoFiltro.categoria != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.categoria
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.etiquetas != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.etiquetas.get(0)
+            if (archivoFiltro.etiquetas != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.etiquetas.get(0)
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if (lista_filtros.palabrasClave != null) {
-                Array palabras_clave = conexion_base_de_datos.createArrayOf(
+            if (archivoFiltro.palabrasClave != null) {
+                Array palabras_clave = conexion.createArrayOf(
                     "varchar",
-                    lista_filtros.palabrasClave.toArray()
+                    archivoFiltro.palabrasClave.toArray()
                 );
-                statement_a_ejecutar.setArray(
-                    iterador_parametro,
+                sentenciaEjecutable.setArray(
+                    indiceParametro,
                     palabras_clave
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
-            if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-                statement_a_ejecutar.setLong(iterador_parametro, tamano_minimo);
-                statement_a_ejecutar.setLong(iterador_parametro, tamano_maximo);
-                iterador_parametro += 2;
+            if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
+                sentenciaEjecutable.setLong(indiceParametro, tamanoMinimo);
+                sentenciaEjecutable.setLong(indiceParametro, tamanoMaximo);
+                indiceParametro += 2;
             }
-            if (lista_filtros.nombre != null) {
-                statement_a_ejecutar.setString(
-                    iterador_parametro,
-                    lista_filtros.nombre
+            if (archivoFiltro.nombre != null) {
+                sentenciaEjecutable.setString(
+                    indiceParametro,
+                    archivoFiltro.nombre
                 );
-                iterador_parametro++;
+                indiceParametro++;
             }
 
-            resultado_consulta = statement_a_ejecutar.executeQuery();
+            resultadoConsulta = sentenciaEjecutable.executeQuery();
         } catch (SQLException e) {
-            ocurrieron_errores = true;
+            ocurrieronErrores = true;
         }
 
-        if (ocurrieron_errores) {
+        if (ocurrieronErrores) {
             return null;
         } else {
-            return resultado_consulta;
+            return resultadoConsulta;
         }
     }
 }
