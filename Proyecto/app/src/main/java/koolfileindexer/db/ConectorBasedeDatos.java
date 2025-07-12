@@ -9,44 +9,28 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 public class ConectorBasedeDatos {
-
     private static final String JDBC_URL =
         "jdbc:postgresql://localhost:5432/KoolFileIndexer";
-    private static final String USUARIO = "usuario_final";
-    private static final String CONTRASENA = "Koo1FileIndexer";
+    private static final String USUARIO = "kool_user";
+    private static final String CONTRASENA = "koolpass";
     private static Connection conexion_base_de_datos;
 
-    public static String iniciar_conexion() {
-        String mensajeError = "";
-
+    public static synchronized Connection obtenerConexion() throws SQLException{
         try {
-            Class.forName("org.postgresql.Driver");
-
-            conexion_base_de_datos = DriverManager.getConnection(
-                JDBC_URL,
-                USUARIO,
-                CONTRASENA
-            );
-        } catch (ClassNotFoundException e) {
-            System.err.println(
-                "No se encontró el driver de JDBC de PostgreSQL: " +
-                e.getMessage()
-            );
-        } catch (SQLException e) {
-            System.err.println(
-                "Error al conectar a la base de datos: " + e.getMessage()
-            );
-
-            if (e.getErrorCode() == 0) {
-                mensajeError = "El servidor no ha sido inicializado";
-            } else {
-                mensajeError = e.getMessage();
+            if (conexion_base_de_datos == null || conexion_base_de_datos.isClosed()) {
+                conexion_base_de_datos = DriverManager.getConnection(
+                    JDBC_URL,
+                    USUARIO,
+                    CONTRASENA
+                );
             }
+        } catch (SQLException e) {
+            throw new SQLException("Error al obtener la conexión", e);
         }
-        return mensajeError;
+        return conexion_base_de_datos;
     }
 
-    public static void terminar_conexion() {
+    public static void terminarConexion() {
         try {
             if (
                 conexion_base_de_datos != null &&
