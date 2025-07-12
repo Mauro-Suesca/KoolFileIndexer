@@ -1,6 +1,3 @@
--- =========================================
--- 1. Función: Buscar Archivos según extensión
--- =========================================
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_extension(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_extension(extension_deseada VARCHAR)
@@ -18,9 +15,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) TO kool_user;
 
--- =========================================
--- 2. Función: Buscar Archivos según ubicación
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_ubicacion(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_ubicacion(ubicacion_deseada VARCHAR)
@@ -38,9 +33,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) TO kool_user;
 
--- =========================================
--- 3. Función: Buscar Archivos según categoría
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_categoria(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_categoria(categoria_deseada VARCHAR)
@@ -59,9 +52,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) TO kool_user;
 
--- =========================================
--- 4. Función: Buscar Archivos según etiqueta
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_etiqueta(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_etiqueta(etiqueta_deseada VARCHAR)
@@ -81,9 +72,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) TO kool_user;
 
--- =========================================
--- 5. Función: Buscar Archivos según palabras clave
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(palabras_deseadas VARCHAR[])
@@ -103,9 +92,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]) TO kool_user;
 
--- =========================================
--- 6. Función: Buscar Archivos que contengan una palabra clave dada
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_con_una_palabra_clave_dada(palabra_deseada VARCHAR)
@@ -125,9 +112,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR) TO kool_user;
 
--- =========================================
--- 7. Función: Buscar Archivos según tamaño
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_tamano(BIGINT, BIGINT);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_tamano(tamano_minimo BIGINT, tamano_maximo BIGINT)
@@ -145,9 +130,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_tamano(BIGINT, BIGINT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(BIGINT, BIGINT) TO kool_user;
 
--- =========================================
--- 8. Función: Archivos cuyo nombre contiene patrón
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_nombre(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_nombre(patron VARCHAR)
@@ -165,9 +148,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_nombre(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_nombre(VARCHAR) TO kool_user;
 
--- =========================================
--- 9. Función: Eliminar archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_eliminar_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR)
@@ -187,9 +168,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 10. Función: Desasociar Palabra Clave de Archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_desasociar_palabra_clave_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR, palabra VARCHAR)
@@ -213,9 +192,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 11. Función: Desasociar Etiqueta de Archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_desasociar_etiqueta_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR, vieja_etiqueta VARCHAR)
@@ -239,9 +216,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 12. Función: Eliminar Etiqueta
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_eliminar_etiqueta(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_eliminar_etiqueta(nombre VARCHAR)
@@ -256,9 +231,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_eliminar_etiqueta(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_eliminar_etiqueta(VARCHAR) TO kool_user;
 
--- =========================================
--- 13. Función: Eliminar Archivos que estén en una ubicación específica
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_eliminar_archivos_en_ubicacion(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_eliminar_archivos_en_ubicacion(ubicacion VARCHAR)
@@ -273,9 +246,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_eliminar_archivos_en_ubicacion(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivos_en_ubicacion(VARCHAR) TO kool_user;
 
--- =========================================
--- 14. Función: Crear Etiqueta
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_crear_etiqueta(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_crear_etiqueta(nombre VARCHAR)
@@ -293,9 +264,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_crear_etiqueta(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_crear_etiqueta(VARCHAR) TO kool_user;
 
--- =========================================
--- 15. Función: Asociar Etiqueta a Archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_asociar_etiqueta_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR, nueva_etiqueta VARCHAR)
@@ -328,9 +297,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 16. Función: Crear Palabra Clave
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_crear_palabra_clave(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_crear_palabra_clave(palabra VARCHAR)
@@ -348,9 +315,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_crear_palabra_clave(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_crear_palabra_clave(VARCHAR) TO kool_user;
 
--- =========================================
--- 17. Función: Asociar Palabra Clave a Archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_asociar_palabra_clave_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR, palabra VARCHAR)
@@ -382,9 +347,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 18. Función: Actualizar archivos con nombre nuevo de ubicacion
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_actualizar_archivos_con_nombre_nuevo_ubicacion(vieja_ubicacion VARCHAR, nueva_ubicacion VARCHAR)
@@ -400,9 +363,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 19. Función: Actualizar ubicación de archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_actualizar_archivo_ubicacion(vieja_ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nueva_ubicacion VARCHAR)
@@ -425,9 +386,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 20. Función: Crear Archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_crear_archivo(nombre VARCHAR, tamano BIGINT, fecha_modificacion DATE, ubicacion VARCHAR, extension_archivo VARCHAR, nueva_categoria VARCHAR)
@@ -460,9 +419,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 21. Función: Actualizar nombre de archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_actualizar_nombre_archivo(ubicacion VARCHAR, viejo_nombre VARCHAR, extension_archivo VARCHAR, nuevo_nombre VARCHAR)
@@ -485,9 +442,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
--- =========================================
--- 22. Función: Actualizar tamaño y fecha de modificación de archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE);
 
 CREATE OR REPLACE FUNCTION sp_actualizar_tamano_fecha_modificacion_archivo(ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nuevo_tamano BIGINT, nueva_fecha_modificacion DATE)
@@ -510,9 +465,7 @@ $$ LANGUAGE plpgsql
 REVOKE ALL ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE) TO kool_user;
 
--- =========================================
--- 23. Función: Actualizar categoría de archivo
--- =========================================
+
 DROP FUNCTION IF EXISTS sp_actualizar_categoria_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_actualizar_categoria_archivo(ubicacion VARCHAR, nombre VARCHAR, extension_archivo VARCHAR, nueva_categoria VARCHAR)

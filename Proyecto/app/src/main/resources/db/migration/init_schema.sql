@@ -1,4 +1,3 @@
--- Eliminar tablas si existen
 DROP TABLE IF EXISTS 
     Archivo_Palabra_clave,
     Etiqueta_Archivo,
@@ -8,59 +7,40 @@ DROP TABLE IF EXISTS
     Categoria,
     Extension;
 
--- ========================
--- Tabla Extension
--- ========================
 CREATE TABLE Extension (
     ext_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     ext_extension VARCHAR(10) NOT NULL UNIQUE
 );
 
--- ========================
--- Tabla Etiqueta
--- ========================
 CREATE TABLE Etiqueta (
     eti_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     eti_nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
--- ========================
--- Tabla Categoria
--- ========================
 CREATE TABLE Categoria (
     cat_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     cat_nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
--- ========================
--- Tabla Archivo
--- ========================
 CREATE TABLE Archivo (
     arc_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     arc_nombre VARCHAR(50) NOT NULL,
-    arc_tamano BIGINT NOT NULL, -- Bytes
+    arc_tamano BIGINT NOT NULL, -- En Bytes
     arc_fecha_modificacion DATE NOT NULL,
     arc_path VARCHAR(100) NOT NULL,
     arc_ext_id INTEGER NOT NULL REFERENCES Extension (ext_id),
     arc_cat_id INTEGER NOT NULL REFERENCES Categoria (cat_id)
 );
 
--- Índices auxiliares
 CREATE INDEX idx_arc_ext_id ON Archivo (arc_ext_id);
 CREATE INDEX idx_arc_cat_id ON Archivo (arc_cat_id);
 CREATE UNIQUE INDEX idx_arc_nombre_completo ON Archivo (arc_path, arc_nombre, arc_ext_id);
 
--- ========================
--- Tabla Palabra_clave
--- ========================
 CREATE TABLE Palabra_clave (
     pal_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     pal_palabra VARCHAR(50) NOT NULL UNIQUE
 );
 
--- ========================
--- Tabla Archivo_Palabra_clave
--- ========================
 CREATE TABLE Archivo_Palabra_clave (
     arcp_arc_id INTEGER NOT NULL REFERENCES Archivo (arc_id) ON DELETE CASCADE,
     arcp_pal_id INTEGER NOT NULL REFERENCES Palabra_clave (pal_id) ON DELETE CASCADE,
@@ -70,9 +50,6 @@ CREATE TABLE Archivo_Palabra_clave (
 CREATE INDEX idx_arcp_pal_id ON Archivo_Palabra_clave (arcp_pal_id);
 CREATE INDEX idx_arcp_arc_id ON Archivo_Palabra_clave (arcp_arc_id);
 
--- ========================
--- Tabla Etiqueta_Archivo
--- ========================
 CREATE TABLE Etiqueta_Archivo (
     etia_eti_id INTEGER NOT NULL REFERENCES Etiqueta (eti_id) ON DELETE CASCADE,
     etia_arc_id INTEGER NOT NULL REFERENCES Archivo (arc_id) ON DELETE CASCADE,
@@ -82,9 +59,6 @@ CREATE TABLE Etiqueta_Archivo (
 CREATE INDEX idx_etia_eti_id ON Etiqueta_Archivo (etia_eti_id);
 CREATE INDEX idx_etia_arc_id ON Etiqueta_Archivo (etia_arc_id);
 
--- ========================
--- TRIGGER 1: Borrar Etiqueta si ningún Archivo la usa
--- ========================
 CREATE OR REPLACE FUNCTION borrar_etiqueta_si_no_usada() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
@@ -100,9 +74,6 @@ AFTER DELETE OR UPDATE ON Etiqueta_Archivo
 FOR EACH ROW
 EXECUTE FUNCTION borrar_etiqueta_si_no_usada();
 
--- ========================
--- TRIGGER 2: Borrar Palabra_clave si ya no está asociada
--- ========================
 CREATE OR REPLACE FUNCTION borrar_palabra_si_no_usada() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
