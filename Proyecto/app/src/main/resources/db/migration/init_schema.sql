@@ -38,7 +38,7 @@ CREATE TABLE Categoria (
 CREATE TABLE Archivo (
     arc_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     arc_nombre VARCHAR(50) NOT NULL,
-    arc_tamano INTEGER NOT NULL, -- Bytes
+    arc_tamano BIGINT NOT NULL, -- Bytes
     arc_fecha_modificacion DATE NOT NULL,
     arc_path VARCHAR(100) NOT NULL,
     arc_ext_id INTEGER NOT NULL REFERENCES Extension (ext_id),

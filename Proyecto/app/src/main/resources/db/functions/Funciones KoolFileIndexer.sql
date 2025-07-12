@@ -128,9 +128,9 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(V
 -- =========================================
 -- 7. Función: Buscar Archivos según tamaño
 -- =========================================
-DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_tamano(INT, INT);
+DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_tamano(BIGINT, BIGINT);
 
-CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_tamano(tamano_minimo INT, tamano_maximo INT)
+CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_tamano(tamano_minimo BIGINT, tamano_maximo BIGINT)
 RETURNS TABLE(archivo TEXT) AS $$
 BEGIN
   RETURN QUERY
@@ -142,8 +142,8 @@ END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
-REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_tamano(INT, INT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(INT, INT) TO kool_user;
+REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_tamano(BIGINT, BIGINT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(BIGINT, BIGINT) TO kool_user;
 
 -- =========================================
 -- 8. Función: Archivos cuyo nombre contiene patrón
@@ -428,9 +428,9 @@ GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHA
 -- =========================================
 -- 20. Función: Crear Archivo
 -- =========================================
-DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR);
+DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_crear_archivo(nombre VARCHAR, tamano INT, fecha_modificacion DATE, ubicacion VARCHAR, extension_archivo VARCHAR, nueva_categoria VARCHAR)
+CREATE OR REPLACE FUNCTION sp_crear_archivo(nombre VARCHAR, tamano BIGINT, fecha_modificacion DATE, ubicacion VARCHAR, extension_archivo VARCHAR, nueva_categoria VARCHAR)
 RETURNS VOID AS $$
 DECLARE
   id_extension INT;
@@ -457,8 +457,8 @@ END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
-REVOKE ALL ON FUNCTION public.sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
+REVOKE ALL ON FUNCTION public.sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 21. Función: Actualizar nombre de archivo
@@ -488,9 +488,9 @@ GRANT EXECUTE ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, 
 -- =========================================
 -- 22. Función: Actualizar tamaño y fecha de modificación de archivo
 -- =========================================
-DROP FUNCTION IF EXISTS sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE);
+DROP FUNCTION IF EXISTS sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE);
 
-CREATE OR REPLACE FUNCTION sp_actualizar_tamano_fecha_modificacion_archivo(ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nuevo_tamano INT, nueva_fecha_modificacion DATE)
+CREATE OR REPLACE FUNCTION sp_actualizar_tamano_fecha_modificacion_archivo(ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nuevo_tamano BIGINT, nueva_fecha_modificacion DATE)
 RETURNS VOID AS $$
 DECLARE
   id_archivo_actualizar INT;
@@ -507,8 +507,8 @@ END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
-REVOKE ALL ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE) TO kool_user;
+REVOKE ALL ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, BIGINT, DATE) TO kool_user;
 
 -- =========================================
 -- 23. Función: Actualizar categoría de archivo
