@@ -4,7 +4,6 @@ import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -50,10 +49,7 @@ public class ConectorBasedeDatos {
 
     public void terminarConexion() {
         try {
-            if (
-                conexion != null &&
-                !conexion.isClosed()
-            ) {
+            if (conexion != null && !conexion.isClosed()) {
                 conexion.close();
             }
         } catch (SQLException e) {
@@ -208,249 +204,191 @@ public class ConectorBasedeDatos {
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
-    ) {
-        ResultSet resultadoConsulta = null;
-        PreparedStatement sentenciaEjecutable = null;
-        boolean ocurrieronErrores = false, esPrimerComando = true;
-        String consultaSqlDinamica =
-            "SELECT * FROM ";
+    ) throws SQLException{
 
-        if (archivoFiltro.extension != null) {
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_segun_extension (?) ";
-            esPrimerComando = false;
-        }
-        if (archivoFiltro.rutaCompleta != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_segun_ubicacion (?) ";
-            esPrimerComando = false;
-        }
-        if (archivoFiltro.categoria != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_segun_categoria (?) ";
-            esPrimerComando = false;
-        }
-        if (archivoFiltro.etiquetas != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_segun_etiqueta (?) ";
-            esPrimerComando = false;
-        }
-        if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_segun_tamano (?, ?) ";
-            esPrimerComando = false;
-        }
-        if (archivoFiltro.nombre != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica += "sp_buscar_archivos_segun_nombre (?) ";
-            esPrimerComando = false;
-        }
+        boolean esPrimerComando = true;
+        String consultaSQLDinamica = "SELECT * FROM ";
 
         if (archivoFiltro.palabrasClave != null) {
             Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
             while(iteradorPalabrasClave.hasNext()){
-                consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-                consultaSqlDinamica +=
-                "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
+                consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+                consultaSQLDinamica +=
+                    "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
+                esPrimerComando = false;
                 iteradorPalabrasClave.next();
             }
         }
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                consultaSqlDinamica,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        CallableStatement sentenciaEjecutable = generarSentenciaEjecutableParaBuscarArchivos(
+            archivoFiltro,
+            tamanoMinimo, 
+            tamanoMaximo, 
+            esPrimerComando,
+            consultaSQLDinamica
+        );
 
-            int indiceParametro = 1;
-            if (archivoFiltro.extension != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.extension
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.rutaCompleta != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.rutaCompleta
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.categoria != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.categoria
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.etiquetas != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.etiquetas.get(0)
-                );
-                indiceParametro++;
-            }
-            if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
-                sentenciaEjecutable.setLong(indiceParametro, tamanoMinimo);
-                sentenciaEjecutable.setLong(indiceParametro, tamanoMaximo);
-                indiceParametro += 2;
-            }
-            if (archivoFiltro.nombre != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.nombre
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.palabrasClave != null) {
-                Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
-                while(iteradorPalabrasClave.hasNext()){
-                    sentenciaEjecutable.setString(
-                        indiceParametro++,
-                        iteradorPalabrasClave.next()
-                    );
-                }
-            }
+        int indiceParametro = 1;
 
-            resultadoConsulta = sentenciaEjecutable.executeQuery();
-        } catch (SQLException e) {
-            ocurrieronErrores = true;
+        if (archivoFiltro.palabrasClave != null) {
+            Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
+            while(iteradorPalabrasClave.hasNext()){
+                sentenciaEjecutable.setString(
+                    indiceParametro++,
+                    iteradorPalabrasClave.next()
+                );
+            }
         }
 
-        if (ocurrieronErrores) {
-            return null;
-        } else {
-            return resultadoConsulta;
-        }
+        return ejecutarConsultaSQLParaBuscarArchivos(
+            archivoFiltro, 
+            tamanoMinimo, 
+            tamanoMaximo, 
+            sentenciaEjecutable, 
+            indiceParametro
+        );
     }
 
     public ResultSet buscarArchivosPorFiltroMinimoUnaPalabraClave(
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
-    ) {
-        ResultSet resultadoConsulta = null;
-        CallableStatement sentenciaEjecutable = null;
-        boolean ocurrieronErrores = false, esPrimerComando = true;
-        String consultaSqlDinamica =
-            "SELECT * FROM ";
+    ) throws SQLException{
+
+        boolean esPrimerComando = true;
+        String consultaSQLDinamica = "SELECT * FROM ";
+
+        if (archivoFiltro.palabrasClave != null) {
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
+                "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
+            esPrimerComando = false;
+        }
+
+        CallableStatement sentenciaEjecutable = generarSentenciaEjecutableParaBuscarArchivos(
+            archivoFiltro,
+            tamanoMinimo, 
+            tamanoMaximo,
+            esPrimerComando,
+            consultaSQLDinamica
+        );
+
         int indiceParametro = 1;
 
+        if (archivoFiltro.palabrasClave != null) {
+            Array palabras_clave = conexion.createArrayOf(
+                "varchar",
+                archivoFiltro.palabrasClave.toArray()
+            );
+            sentenciaEjecutable.setArray(
+                indiceParametro++,
+                palabras_clave
+            );
+        }
+
+        return ejecutarConsultaSQLParaBuscarArchivos(
+            archivoFiltro, 
+            tamanoMinimo, 
+            tamanoMaximo, 
+            sentenciaEjecutable, 
+            indiceParametro
+        );
+    }
+
+    private CallableStatement generarSentenciaEjecutableParaBuscarArchivos(
+        Archivo archivoFiltro,
+        long tamanoMinimo,
+        long tamanoMaximo,
+        boolean esPrimerComando,
+        String consultaSQLDinamica
+    ) throws SQLException{
+
         if (archivoFiltro.extension != null) {
-            consultaSqlDinamica +=
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_extension (?) ";
             esPrimerComando = false;
         }
         if (archivoFiltro.rutaCompleta != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
             esPrimerComando = false;
         }
         if (archivoFiltro.categoria != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_categoria (?) ";
             esPrimerComando = false;
         }
         if (archivoFiltro.etiquetas != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
             esPrimerComando = false;
         }
-        if (archivoFiltro.palabrasClave != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
-                "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
-            esPrimerComando = false;
-        }
         if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica +=
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
             esPrimerComando = false;
         }
         if (archivoFiltro.nombre != null) {
-            consultaSqlDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
-            consultaSqlDinamica += "sp_buscar_archivos_segun_nombre (?) ";
+            consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
+            consultaSQLDinamica += "sp_buscar_archivos_segun_nombre (?) ";
             esPrimerComando = false;
         }
+        
+        return conexion.prepareCall(
+            consultaSQLDinamica,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
+    }
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                consultaSqlDinamica,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
+    private ResultSet ejecutarConsultaSQLParaBuscarArchivos(
+        Archivo archivoFiltro, 
+        long tamanoMinimo,
+        long tamanoMaximo,
+        CallableStatement sentenciaEjecutable,
+        int indiceParametro
+    ) throws SQLException{
+
+        if (archivoFiltro.extension != null) {
+            sentenciaEjecutable.setString(
+                indiceParametro++,
+                archivoFiltro.extension
             );
-
-            if (archivoFiltro.extension != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.extension
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.rutaCompleta != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.rutaCompleta
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.categoria != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.categoria
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.etiquetas != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.etiquetas.get(0)
-                );
-                indiceParametro++;
-            }
-            if (archivoFiltro.palabrasClave != null) {
-                Array palabras_clave = conexion.createArrayOf(
-                    "varchar",
-                    archivoFiltro.palabrasClave.toArray()
-                );
-                sentenciaEjecutable.setArray(
-                    indiceParametro,
-                    palabras_clave
-                );
-                indiceParametro++;
-            }
-            if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
-                sentenciaEjecutable.setLong(indiceParametro, tamanoMinimo);
-                sentenciaEjecutable.setLong(indiceParametro, tamanoMaximo);
-                indiceParametro += 2;
-            }
-            if (archivoFiltro.nombre != null) {
-                sentenciaEjecutable.setString(
-                    indiceParametro,
-                    archivoFiltro.nombre
-                );
-                indiceParametro++;
-            }
-
-            resultadoConsulta = sentenciaEjecutable.executeQuery();
-        } catch (SQLException e) {
-            ocurrieronErrores = true;
+        }
+        if (archivoFiltro.rutaCompleta != null) {
+            sentenciaEjecutable.setString(
+                indiceParametro++,
+                archivoFiltro.rutaCompleta
+            );
+        }
+        if (archivoFiltro.categoria != null) {
+            sentenciaEjecutable.setString(
+                indiceParametro++,
+                archivoFiltro.categoria
+            );
+        }
+        if (archivoFiltro.etiquetas != null) {
+            sentenciaEjecutable.setString(
+                indiceParametro++,
+                archivoFiltro.etiquetas.get(0)
+            );
+        }
+        if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
+            sentenciaEjecutable.setLong(indiceParametro++, tamanoMinimo);
+            sentenciaEjecutable.setLong(indiceParametro++, tamanoMaximo);
+        }
+        if (archivoFiltro.nombre != null) {
+            sentenciaEjecutable.setString(
+                indiceParametro++,
+                archivoFiltro.nombre
+            );
         }
 
-        if (ocurrieronErrores) {
-            return null;
-        } else {
-            return resultadoConsulta;
-        }
+        return sentenciaEjecutable.executeQuery();
     }
 }
