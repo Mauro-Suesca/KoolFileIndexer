@@ -4,6 +4,7 @@ import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -46,7 +47,7 @@ public class ConectorBasedeDatos {
     public static boolean crearArchivo(Archivo nuevo_archivo) {
         CallableStatement statement_a_ejecutar = null;
         final String string_comando_a_ejecutar =
-            "{PERFORM sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
+            "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -81,7 +82,7 @@ public class ConectorBasedeDatos {
     ) {
         CallableStatement statement_a_ejecutar = null;
         final String string_comando_a_ejecutar =
-            "{PERFORM sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
+            "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -108,7 +109,7 @@ public class ConectorBasedeDatos {
     ) {
         CallableStatement statement_a_ejecutar = null;
         final String string_comando_a_ejecutar =
-            "{PERFORM sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
+            "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -140,7 +141,7 @@ public class ConectorBasedeDatos {
     ) {
         CallableStatement statement_a_ejecutar = null;
         final String string_comando_a_ejecutar =
-            "{PERFORM sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
+            "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -165,7 +166,7 @@ public class ConectorBasedeDatos {
     public static boolean eliminarArchivo(Archivo archivo_eliminar) {
         CallableStatement statement_a_ejecutar = null;
         final String string_comando_a_ejecutar =
-            "{PERFORM sp_eliminar_archivo (?, ?, ?)}";
+            "{CALL sp_eliminar_archivo (?, ?, ?)}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -192,51 +193,55 @@ public class ConectorBasedeDatos {
         long tamano_maximo
     ) {
         ResultSet resultado_consulta = null;
-        CallableStatement statement_a_ejecutar = null;
-        boolean ocurrieron_errores = false;
+        PreparedStatement statement_a_ejecutar = null;
+        boolean ocurrieron_errores = false, es_primer_comando = true;
         String string_comando_a_ejecutar =
-            "{SELECT ubi_path || '/' || arc_nombre || '.' || ext_extension FROM ";
+            "SELECT * FROM ";
 
         if (lista_filtros.extension != null) {
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_extension (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.rutaCompleta != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.categoria != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_categoria (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.etiquetas != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
+            es_primer_comando = false;
         }
         if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.nombre != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar += "sp_buscar_archivos_segun_nombre (?) ";
+            es_primer_comando = false;
         }
 
         if (lista_filtros.palabrasClave != null) {
             Iterator<String> iterador_palabras_clave = lista_filtros.palabrasClave.iterator();
             while(iterador_palabras_clave.hasNext()){
-                string_comando_a_ejecutar += "INTERSECT ";
+                string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
                 string_comando_a_ejecutar +=
                 "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
                 iterador_palabras_clave.next();
             }
         }
-
-        string_comando_a_ejecutar += "}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -296,9 +301,7 @@ public class ConectorBasedeDatos {
                 }
             }
 
-            statement_a_ejecutar.execute();
-
-            resultado_consulta = statement_a_ejecutar.getResultSet();
+            resultado_consulta = statement_a_ejecutar.executeQuery();
         } catch (SQLException e) {
             ocurrieron_errores = true;
         }
@@ -317,46 +320,51 @@ public class ConectorBasedeDatos {
     ) {
         ResultSet resultado_consulta = null;
         CallableStatement statement_a_ejecutar = null;
-        boolean ocurrieron_errores = false;
+        boolean ocurrieron_errores = false, es_primer_comando = true;
         String string_comando_a_ejecutar =
-            "{SELECT ubi_path || '/' || arc_nombre || '.' || ext_extension FROM ";
+            "SELECT * FROM ";
         int iterador_parametro = 1;
 
         if (lista_filtros.extension != null) {
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_extension (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.rutaCompleta != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.categoria != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_categoria (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.etiquetas != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.palabrasClave != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
+            es_primer_comando = false;
         }
         if ((tamano_minimo >= 0) & (tamano_maximo >= 0)) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar +=
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
+            es_primer_comando = false;
         }
         if (lista_filtros.nombre != null) {
-            string_comando_a_ejecutar += "INTERSECT ";
+            string_comando_a_ejecutar += es_primer_comando ? "" : "INTERSECT SELECT * FROM ";
             string_comando_a_ejecutar += "sp_buscar_archivos_segun_nombre (?) ";
+            es_primer_comando = false;
         }
-
-        string_comando_a_ejecutar += "}";
 
         try {
             statement_a_ejecutar = conexion_base_de_datos.prepareCall(
@@ -417,9 +425,7 @@ public class ConectorBasedeDatos {
                 iterador_parametro++;
             }
 
-            statement_a_ejecutar.execute();
-
-            resultado_consulta = statement_a_ejecutar.getResultSet();
+            resultado_consulta = statement_a_ejecutar.executeQuery();
         } catch (SQLException e) {
             ocurrieron_errores = true;
         }
