@@ -118,6 +118,4 @@ AFTER DELETE OR UPDATE ON Archivo_Palabra_clave
 FOR EACH ROW
 EXECUTE FUNCTION borrar_palabra_si_no_usada();
 
-CREATE USER usuario_final WITH PASSWORD 'Koo1FileIndexer';
-GRANT ALL PRIVILEGES ON DATABASE KoolFileIndexer TO usuario_final;
-GRANT USAGE ON SCHEMA public TO usuario_final;
+GRANT USAGE ON SCHEMA public TO kool_user;

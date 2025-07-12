@@ -16,7 +16,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 2. Función: Buscar Archivos según ubicación
@@ -36,7 +36,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 3. Función: Buscar Archivos según categoría
@@ -57,7 +57,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 4. Función: Buscar Archivos según etiqueta
@@ -79,7 +79,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 5. Función: Buscar Archivos según palabras clave
@@ -101,7 +101,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]) TO kool_user;
 
 -- =========================================
 -- 6. Función: Buscar Archivos que contengan una palabra clave dada
@@ -123,7 +123,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 7. Función: Buscar Archivos según tamaño
@@ -143,7 +143,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_tamano(INT, INT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(INT, INT) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(INT, INT) TO kool_user;
 
 -- =========================================
 -- 8. Función: Archivos cuyo nombre contiene patrón
@@ -163,7 +163,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_buscar_archivos_segun_nombre(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_nombre(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_nombre(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 9. Función: Eliminar archivo
@@ -185,7 +185,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivo(VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 10. Función: Desasociar Palabra Clave de Archivo
@@ -211,7 +211,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_desasociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 11. Función: Desasociar Etiqueta de Archivo
@@ -237,7 +237,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_desasociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 12. Función: Eliminar Etiqueta
@@ -254,7 +254,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_eliminar_etiqueta(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_eliminar_etiqueta(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_eliminar_etiqueta(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 13. Función: Eliminar Archivos que estén en una ubicación específica
@@ -271,7 +271,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_eliminar_archivos_en_ubicacion(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivos_en_ubicacion(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_eliminar_archivos_en_ubicacion(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 14. Función: Crear Etiqueta
@@ -291,7 +291,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_crear_etiqueta(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_crear_etiqueta(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_crear_etiqueta(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 15. Función: Asociar Etiqueta a Archivo
@@ -326,7 +326,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_asociar_etiqueta_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 16. Función: Crear Palabra Clave
@@ -346,7 +346,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_crear_palabra_clave(VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_crear_palabra_clave(VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_crear_palabra_clave(VARCHAR) TO kool_user;
 
 -- =========================================
 -- 17. Función: Asociar Palabra Clave a Archivo
@@ -380,7 +380,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 18. Función: Actualizar archivos con nombre nuevo de ubicacion
@@ -398,7 +398,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 19. Función: Actualizar ubicación de archivo
@@ -423,7 +423,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 20. Función: Crear Archivo
@@ -458,7 +458,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_crear_archivo(VARCHAR, INT, DATE, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 21. Función: Actualizar nombre de archivo
@@ -483,7 +483,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 -- =========================================
 -- 22. Función: Actualizar tamaño y fecha de modificación de archivo
@@ -508,7 +508,7 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_tamano_fecha_modificacion_archivo(VARCHAR, VARCHAR, VARCHAR, INT, DATE) TO kool_user;
 
 -- =========================================
 -- 23. Función: Actualizar categoría de archivo
@@ -538,4 +538,4 @@ $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
 REVOKE ALL ON FUNCTION public.sp_actualizar_categoria_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_categoria_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO usuario_final;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_categoria_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
