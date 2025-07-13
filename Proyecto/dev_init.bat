@@ -65,7 +65,6 @@ if exist "%SQL_SETUP%" (
 )
 
 REM === Verificar o crear base de datos ===
-echo Hola 
 if exist "%SQL_CREATE%" (
     echo Ejecutando script para crear base de datos si no existen...
     psql -U %ADMIN_USER% -h %DB_HOST% -p %DB_PORT% -d postgres -f "%SQL_CREATE%"
