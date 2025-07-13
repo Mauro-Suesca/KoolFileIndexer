@@ -1,29 +1,13 @@
 package koolfileindexer;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.controller.Controller;
 import koolfileindexer.ui.MainWindow;
 
 public class App extends Application {
 
-    // TODO: Move this to it own program
-    public static void dbMain(String[] args) throws SQLException {
-        ConectorBasedeDatos conector = ConectorBasedeDatos.obtenerInstancia();
-        try (Connection conexion = conector.obtenerConexion()) {
-            if (conexion != null) {
-                System.out.println("Conexión exitosa a PostgreSQL");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error de conexión: " + e.getMessage());
-        } finally {
-            conector.terminarConexion();
-        }
-    }
     Controller controller = new Controller();
 
     public static void main(String[] args) {
