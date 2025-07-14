@@ -1,10 +1,11 @@
-package modelo;
+package koolfileindexer.modelo;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 
 public class Archivo {
+
     private final String nombre;
     private final String rutaCompleta;
     private final String extension;
@@ -15,18 +16,20 @@ public class Archivo {
     private final List<Etiqueta> etiquetas = new ArrayList<>();
     private final Set<String> palabrasClave = new HashSet<>();
 
-    public Archivo(String nombre,
-            String rutaCompleta,
-            String extension,
-            long tamanoBytes,
-            LocalDateTime fechaCreacion,
-            LocalDateTime fechaModificacion) {
+    public Archivo(
+        String nombre,
+        String rutaCompleta,
+        String extension,
+        long tamanoBytes,
+        LocalDateTime fechaCreacion,
+        LocalDateTime fechaModificacion
+    ) {
         // RN-001: nombre trim(), rutas absolutas y normalizadas
         this.nombre = Objects.requireNonNull(nombre).trim();
         this.rutaCompleta = Paths.get(rutaCompleta)
-                .toAbsolutePath()
-                .normalize()
-                .toString();
+            .toAbsolutePath()
+            .normalize()
+            .toString();
         this.extension = (extension != null ? extension.toLowerCase() : "");
         this.tamanoBytes = tamanoBytes;
         this.fechaCreacion = fechaCreacion;
@@ -43,8 +46,9 @@ public class Archivo {
     }
 
     public void agregarEtiqueta(Etiqueta etiqueta) {
-        if (etiqueta == null)
-            throw new IllegalArgumentException("Etiqueta nula");
+        if (etiqueta == null) throw new IllegalArgumentException(
+            "Etiqueta nula"
+        );
         if (!etiquetas.contains(etiqueta)) {
             etiquetas.add(etiqueta);
             actualizarFechaModificacion(LocalDateTime.now());
@@ -59,7 +63,9 @@ public class Archivo {
 
     public void agregarPalabraClave(String palabra) {
         if (!ValidadorEntrada.esPalabraClaveValida(palabra)) {
-            throw new IllegalArgumentException("Palabra clave inválida: '" + palabra + "'");
+            throw new IllegalArgumentException(
+                "Palabra clave inválida: '" + palabra + "'"
+            );
         }
         if (palabrasClave.add(palabra.toLowerCase().trim())) {
             actualizarFechaModificacion(LocalDateTime.now());
@@ -75,10 +81,11 @@ public class Archivo {
     public boolean modificarPalabraClave(String antigua, String nueva) {
         String orig = Objects.requireNonNull(antigua).toLowerCase().trim();
         String neu = Objects.requireNonNull(nueva).toLowerCase().trim();
-        if (!palabrasClave.contains(orig))
-            return false;
+        if (!palabrasClave.contains(orig)) return false;
         if (!ValidadorEntrada.esPalabraClaveValida(nueva)) {
-            throw new IllegalArgumentException("Nueva palabra clave inválida: '" + nueva + "'");
+            throw new IllegalArgumentException(
+                "Nueva palabra clave inválida: '" + nueva + "'"
+            );
         }
         palabrasClave.remove(orig);
         palabrasClave.add(neu);
@@ -91,8 +98,7 @@ public class Archivo {
     }
 
     public void asignarCategoria(Categoria categoria) {
-        if (categoria != null)
-            this.categoria = categoria;
+        if (categoria != null) this.categoria = categoria;
     }
 
     public String getNombre() {
@@ -134,24 +140,24 @@ public class Archivo {
     @Override
     public String toString() {
         return String.format(
-                "Archivo{\n" +
-                        "  nombre       : '%s',\n" +
-                        "  ruta         : '%s',\n" +
-                        "  extensión    : '%s',\n" +
-                        "  tamaño       : %d bytes,\n" +
-                        "  modificado   : %s,\n" +
-                        "  categoría    : %s,\n" +
-                        "  etiquetas    : %s,\n" +
-                        "  palabrasClave: %s\n" +
-                        "}",
-                nombre,
-                rutaCompleta,
-                extension,
-                tamanoBytes,
-                fechaModificacion,
-                categoria.getNombre(),
-                etiquetas,
-                palabrasClave);
+            "Archivo{\n" +
+            "  nombre       : '%s',\n" +
+            "  ruta         : '%s',\n" +
+            "  extensión    : '%s',\n" +
+            "  tamaño       : %d bytes,\n" +
+            "  modificado   : %s,\n" +
+            "  categoría    : %s,\n" +
+            "  etiquetas    : %s,\n" +
+            "  palabrasClave: %s\n" +
+            "}",
+            nombre,
+            rutaCompleta,
+            extension,
+            tamanoBytes,
+            fechaModificacion,
+            categoria.getNombre(),
+            etiquetas,
+            palabrasClave
+        );
     }
-
 }

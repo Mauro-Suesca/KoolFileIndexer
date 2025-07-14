@@ -1,10 +1,14 @@
-package modelo;
+package koolfileindexer.modelo;
 
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 
 public class Categoria {
-    public static final Categoria SIN_CATEGORIA = new Categoria("Sin categoría", true);
+
+    public static final Categoria SIN_CATEGORIA = new Categoria(
+        "Sin categoría",
+        true
+    );
 
     private final String nombre;
     private final boolean esAutomatica;
@@ -12,7 +16,9 @@ public class Categoria {
     private Categoria(String nombre, boolean esAutomatica) {
         String limpio = Objects.requireNonNull(nombre).trim();
         if (limpio.length() < 1 || limpio.length() > 50) {
-            throw new IllegalArgumentException("Nombre de categoría inválido (1–50 chars)");
+            throw new IllegalArgumentException(
+                "Nombre de categoría inválido (1–50 chars)"
+            );
         }
         this.nombre = limpio;
         this.esAutomatica = esAutomatica;
@@ -33,14 +39,10 @@ public class Categoria {
         Set<String> musica = Set.of("mp3", "wav", "aac");
         Set<String> videos = Set.of("mp4", "avi", "mkv");
 
-        if (imagenes.contains(ext))
-            return new Categoria("Imagen", true);
-        if (documentos.contains(ext))
-            return new Categoria("Documento", true);
-        if (musica.contains(ext))
-            return new Categoria("Música", true);
-        if (videos.contains(ext))
-            return new Categoria("Video", true);
+        if (imagenes.contains(ext)) return new Categoria("Imagen", true);
+        if (documentos.contains(ext)) return new Categoria("Documento", true);
+        if (musica.contains(ext)) return new Categoria("Música", true);
+        if (videos.contains(ext)) return new Categoria("Video", true);
         return SIN_CATEGORIA;
     }
 
