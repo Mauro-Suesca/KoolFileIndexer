@@ -89,40 +89,13 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public boolean actualizarNombreArchivo(
+    public boolean asociarPalabraClaveArchivo(
         Archivo archivoParaModificar,
-        String viejo_nombre
+        String nuevaPalabraClave
     ) {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
-            "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
-
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
-
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, viejo_nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setString(4, archivoParaModificar.nombre);
-
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public boolean actualizarTamanoFechaModificacionArchivo(
-        Archivo archivoParaModificar
-    ) {
-        CallableStatement sentenciaEjecutable = null;
-        final String stringComandoSql =
-            "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
+            "{CALL sp_asociar_palabra_clave_archivo (?, ?, ?, ?)}";
 
         try {
             sentenciaEjecutable = conexion.prepareCall(
@@ -134,12 +107,7 @@ public class ConectorBasedeDatos {
             sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
             sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
             sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setLong(4, archivoParaModificar.tamanoBytes);
-
-            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
-                archivoParaModificar.fechaCreacion.toLocalDate()
-            );
-            sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
+            sentenciaEjecutable.setString(4, nuevaPalabraClave);
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -149,12 +117,13 @@ public class ConectorBasedeDatos {
         return true;
     }
 
-    public boolean actualizarCategoriaArchivo(
-        Archivo archivoParaModificar
+    public boolean asociarEtiquetaArchivo(
+        Archivo archivoParaModificar,
+        String nuevaEtiqueta
     ) {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
-            "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
+            "{CALL sp_asociar_etiqueta_archivo (?, ?, ?, ?)}";
 
         try {
             sentenciaEjecutable = conexion.prepareCall(
@@ -166,31 +135,7 @@ public class ConectorBasedeDatos {
             sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
             sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
             sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setString(4, archivoParaModificar.categoria);
-
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public boolean eliminarArchivo(Archivo archivoParaEliminar) {
-        CallableStatement sentenciaEjecutable = null;
-        final String stringComandoSql =
-            "{CALL sp_eliminar_archivo (?, ?, ?)}";
-
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
-
-            sentenciaEjecutable.setString(1, archivoParaEliminar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaEliminar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaEliminar.extension);
+            sentenciaEjecutable.setString(4, nuevaEtiqueta);
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -390,5 +335,270 @@ public class ConectorBasedeDatos {
         }
 
         return sentenciaEjecutable.executeQuery();
+    }
+
+    public boolean actualizarUbicacionConNombreNuevo(
+        String viejaUbicacion,
+        String nuevaUbicacion
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_actualizar_nombre_ubicacion (?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, viejaUbicacion);
+            sentenciaEjecutable.setString(2, nuevaUbicacion);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean actualizarUbicacionArchivo(
+        Archivo archivoParaModificar,
+        String viejaUbicacion
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_actualizar_archivo_con_nueva_ubicacion (?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, viejaUbicacion);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, archivoParaModificar.rutaCompleta);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean actualizarNombreArchivo(
+        Archivo archivoParaModificar,
+        String viejo_nombre
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, viejo_nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, archivoParaModificar.nombre);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean actualizarTamanoFechaModificacionArchivo(
+        Archivo archivoParaModificar
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setLong(4, archivoParaModificar.tamanoBytes);
+
+            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
+                archivoParaModificar.fechaCreacion.toLocalDate()
+            );
+            sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean actualizarCategoriaArchivo(
+        Archivo archivoParaModificar
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, archivoParaModificar.categoria);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean desasociarPalabraClaveArchivo(
+        Archivo archivoParaModificar,
+        String palabraClaveParaEliminar
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_desasociar_palabra_clave_archivo (?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, palabraClaveParaEliminar);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean desasociarEtiquetaArchivo(
+        Archivo archivoParaModificar,
+        String etiquetaParaEliminar
+    ) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_desasociar_etiqueta_archivo (?, ?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(4, etiquetaParaEliminar);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean eliminarArchivo(Archivo archivoParaEliminar) {
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_eliminar_archivo (?, ?, ?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, archivoParaEliminar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaEliminar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaEliminar.extension);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean eliminarArchivosEnUbicacion(String ubicacionParaEliminar){
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_eliminar_archivos_en_ubicacion (?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, ubicacionParaEliminar);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean eliminarEtiqueta(String etiquetaParaEliminar){
+        CallableStatement sentenciaEjecutable = null;
+        final String stringComandoSql =
+            "{CALL sp_eliminar_etiqueta (?)}";
+
+        try {
+            sentenciaEjecutable = conexion.prepareCall(
+                stringComandoSql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY
+            );
+
+            sentenciaEjecutable.setString(1, etiquetaParaEliminar);
+
+            sentenciaEjecutable.execute();
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return true;
     }
 }
