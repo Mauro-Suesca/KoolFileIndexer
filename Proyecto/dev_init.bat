@@ -11,6 +11,7 @@ set "DB_PASS=koolpass"
 set "SQL_SETUP=app\src\main\resources\db\migration\setup_dev.sql"
 set "SQL_CREATE=app\src\main\resources\db\migration\create_db.sql"
 set "SQL_INIT=app\src\main\resources\db\migration\init_schema.sql"
+set "SQL_FUNCTIONS=app\src\main\resources\db\functions\function_initialization.sql"
 
 echo ================================
 echo 🛠 Inicializando entorno de desarrollo (Windows)
@@ -79,16 +80,28 @@ if exist "%SQL_CREATE%" (
 
 set "PGPASSWORD=%DB_PASS%"
 
-REM === Ejecutar script de inicialización ===
+REM === Ejecutar script de inicialización de base de datos===
 if exist "%SQL_INIT%" (
     echo Ejecutando script de inicialización de base de datos...
     psql -U %DB_USER% -h %DB_HOST% -p %DB_PORT% -d %DB_NAME% -f "%SQL_INIT%"
     if errorlevel 1 (
-        echo Error al ejecutar el script de inicialización.
+        echo Error al ejecutar el script de inicialización de base de datos.
         exit /b 1
     )
 ) else (
     echo El archivo "%SQL_INIT%" no existe. No se ejecutó nada.
+)
+
+REM === Ejecutar script de creación de funciones de base de datos===
+if exist "%SQL_FUNCTIONS%" (
+    echo Ejecutando script de creación de funciones de base de datos...
+    psql -U %DB_USER% -h %DB_HOST% -p %DB_PORT% -d %DB_NAME% -f "%SQL_FUNCTIONS%"
+    if errorlevel 1 (
+        echo Error al ejecutar el script de creación de funciones de base de datos.
+        exit /b 1
+    )
+) else (
+    echo El archivo "%SQL_FUNCTIONS%" no existe. No se ejecutó nada.
 )
 
 set "PGPASSWORD="
