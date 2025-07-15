@@ -348,9 +348,9 @@ REVOKE ALL ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR,
 GRANT EXECUTE ON FUNCTION public.sp_asociar_palabra_clave_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 
-DROP FUNCTION IF EXISTS sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR);
+DROP FUNCTION IF EXISTS sp_actualizar_nombre_ubicacion(VARCHAR, VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_actualizar_archivos_con_nombre_nuevo_ubicacion(vieja_ubicacion VARCHAR, nueva_ubicacion VARCHAR)
+CREATE OR REPLACE FUNCTION sp_actualizar_nombre_ubicacion(vieja_ubicacion VARCHAR, nueva_ubicacion VARCHAR)
 RETURNS VOID AS $$
 BEGIN
   UPDATE Archivo
@@ -360,13 +360,13 @@ END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
-REVOKE ALL ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivos_con_nombre_nuevo_ubicacion(VARCHAR, VARCHAR) TO kool_user;
+REVOKE ALL ON FUNCTION public.sp_actualizar_nombre_ubicacion(VARCHAR, VARCHAR) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_nombre_ubicacion(VARCHAR, VARCHAR) TO kool_user;
 
 
-DROP FUNCTION IF EXISTS sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+DROP FUNCTION IF EXISTS sp_actualizar_archivo_con_nueva_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 
-CREATE OR REPLACE FUNCTION sp_actualizar_archivo_ubicacion(vieja_ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nueva_ubicacion VARCHAR)
+CREATE OR REPLACE FUNCTION sp_actualizar_archivo_con_nueva_ubicacion(vieja_ubicacion VARCHAR, nombre_archivo VARCHAR, extension_archivo VARCHAR, nueva_ubicacion VARCHAR)
 RETURNS VOID AS $$
 DECLARE
   id_archivo_actualizar INT;
@@ -383,8 +383,8 @@ END;
 $$ LANGUAGE plpgsql
   SECURITY DEFINER;
 
-REVOKE ALL ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
+REVOKE ALL ON FUNCTION public.sp_actualizar_archivo_con_nueva_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_actualizar_archivo_con_nueva_ubicacion(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO kool_user;
 
 
 DROP FUNCTION IF EXISTS sp_crear_archivo(VARCHAR, BIGINT, DATE, VARCHAR, VARCHAR, VARCHAR);
