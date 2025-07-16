@@ -57,92 +57,74 @@ public class ConectorBasedeDatos {
         }
     }
 
-    public boolean crearArchivo(Archivo nuevoArchivo) {
+    public void crearArchivo(Archivo nuevoArchivo) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, nuevoArchivo.getNombre());
-            sentenciaEjecutable.setLong(2, nuevoArchivo.getTamanoBytes());
+        sentenciaEjecutable.setString(1, nuevoArchivo.getNombre());
+        sentenciaEjecutable.setLong(2, nuevoArchivo.getTamanoBytes());
 
-            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
-                nuevoArchivo.getFechaModificacion().toLocalDate()
-            );
-            sentenciaEjecutable.setDate(3, fechaModificacionParaSql);
+        java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
+            nuevoArchivo.getFechaModificacion().toLocalDate()
+        );
+        sentenciaEjecutable.setDate(3, fechaModificacionParaSql);
 
-            sentenciaEjecutable.setString(4, nuevoArchivo.getRutaCompleta());
-            sentenciaEjecutable.setString(5, nuevoArchivo.getExtension());
-            sentenciaEjecutable.setString(6, nuevoArchivo.getCategoria().getNombre());
+        sentenciaEjecutable.setString(4, nuevoArchivo.getRutaCompleta());
+        sentenciaEjecutable.setString(5, nuevoArchivo.getExtension());
+        sentenciaEjecutable.setString(6, nuevoArchivo.getCategoria().getNombre());
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean asociarPalabraClaveArchivo(
+    public void asociarPalabraClaveArchivo(
         Archivo archivoParaModificar,
         String nuevaPalabraClave
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_asociar_palabra_clave_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, nuevaPalabraClave);
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, nuevaPalabraClave);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean asociarEtiquetaArchivo(
+    public void asociarEtiquetaArchivo(
         Archivo archivoParaModificar,
         String nuevaEtiqueta
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_asociar_etiqueta_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, nuevaEtiqueta);
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, nuevaEtiqueta);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
     public ResultSet buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
@@ -337,268 +319,209 @@ public class ConectorBasedeDatos {
         return sentenciaEjecutable.executeQuery();
     }
 
-    public boolean actualizarUbicacionConNombreNuevo(
+    public void actualizarUbicacionConNombreNuevo(
         String viejaUbicacion,
         String nuevaUbicacion
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_nombre_ubicacion (?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, viejaUbicacion);
-            sentenciaEjecutable.setString(2, nuevaUbicacion);
+        sentenciaEjecutable.setString(1, viejaUbicacion);
+        sentenciaEjecutable.setString(2, nuevaUbicacion);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean actualizarUbicacionArchivo(
+    public void actualizarUbicacionArchivo(
         Archivo archivoParaModificar,
         String viejaUbicacion
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_archivo_con_nueva_ubicacion (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, viejaUbicacion);
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(1, viejaUbicacion);
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, archivoParaModificar.getRutaCompleta());
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean actualizarNombreArchivo(
+    public void actualizarNombreArchivo(
         Archivo archivoParaModificar,
         String viejo_nombre
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, viejo_nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, viejo_nombre);
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, archivoParaModificar.getNombre());
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean actualizarTamanoFechaModificacionArchivo(
+    public void actualizarTamanoFechaModificacionArchivo(
         Archivo archivoParaModificar
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setLong(4, archivoParaModificar.getTamanoBytes());
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setLong(4, archivoParaModificar.getTamanoBytes());
 
-            java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
-                archivoParaModificar.getFechaModificacion().toLocalDate()
-            );
-            sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
+        java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
+            archivoParaModificar.getFechaModificacion().toLocalDate()
+        );
+        sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean actualizarCategoriaArchivo(
+    public void actualizarCategoriaArchivo(
         Archivo archivoParaModificar
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, archivoParaModificar.getCategoria().getNombre());
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, archivoParaModificar.getCategoria().getNombre());
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean desasociarPalabraClaveArchivo(
+    public void desasociarPalabraClaveArchivo(
         Archivo archivoParaModificar,
         String palabraClaveParaEliminar
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_desasociar_palabra_clave_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, palabraClaveParaEliminar);
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, palabraClaveParaEliminar);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean desasociarEtiquetaArchivo(
+    public void desasociarEtiquetaArchivo(
         Archivo archivoParaModificar,
         String etiquetaParaEliminar
-    ) {
+    ) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_desasociar_etiqueta_archivo (?, ?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
-            sentenciaEjecutable.setString(4, etiquetaParaEliminar);
+        sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+        sentenciaEjecutable.setString(4, etiquetaParaEliminar);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean eliminarArchivo(Archivo archivoParaEliminar) {
+    public void eliminarArchivo(Archivo archivoParaEliminar) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_archivo (?, ?, ?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, archivoParaEliminar.getRutaCompleta());
-            sentenciaEjecutable.setString(2, archivoParaEliminar.getNombre());
-            sentenciaEjecutable.setString(3, archivoParaEliminar.getExtension());
+        sentenciaEjecutable.setString(1, archivoParaEliminar.getRutaCompleta());
+        sentenciaEjecutable.setString(2, archivoParaEliminar.getNombre());
+        sentenciaEjecutable.setString(3, archivoParaEliminar.getExtension());
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
+        sentenciaEjecutable.execute();
 
-        return true;
     }
 
-    public boolean eliminarArchivosEnUbicacion(String ubicacionParaEliminar){
+    public void eliminarArchivosEnUbicacion(String ubicacionParaEliminar) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_archivos_en_ubicacion (?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, ubicacionParaEliminar);
+        sentenciaEjecutable.setString(1, ubicacionParaEliminar);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 
-    public boolean eliminarEtiqueta(String etiquetaParaEliminar){
+    public void eliminarEtiqueta(String etiquetaParaEliminar) throws SQLException{
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_etiqueta (?)}";
 
-        try {
-            sentenciaEjecutable = conexion.prepareCall(
-                stringComandoSql,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY
-            );
+        sentenciaEjecutable = conexion.prepareCall(
+            stringComandoSql,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
 
-            sentenciaEjecutable.setString(1, etiquetaParaEliminar);
+        sentenciaEjecutable.setString(1, etiquetaParaEliminar);
 
-            sentenciaEjecutable.execute();
-        } catch (SQLException e) {
-            return false;
-        }
-
-        return true;
+        sentenciaEjecutable.execute();
     }
 }
