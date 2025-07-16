@@ -16,6 +16,15 @@ public class Archivo {
     private List<Etiqueta> etiquetas;
     private Set<String> palabrasClave;
 
+    Archivo(String nombre, long tamanoBytes, LocalDateTime fechaModificacion, String rutaCompleta, String extension, String categoria){
+        this.nombre = nombre;
+        this.tamanoBytes = tamanoBytes;
+        this.fechaModificacion = fechaModificacion;
+        this.rutaCompleta = rutaCompleta;
+        this.extension = extension;
+        this.categoria = new Categoria(categoria);
+    }
+
     public Categoria getCategoria() {
         return categoria;
     }

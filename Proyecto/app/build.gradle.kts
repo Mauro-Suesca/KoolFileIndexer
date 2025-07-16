@@ -22,6 +22,7 @@ javafx {
 dependencies {
     implementation("org.apache.commons:commons-text")
     implementation("org.postgresql:postgresql:42.7.7")
+    testImplementation("junit:junit:4.13.2")
 }
 
 application {
