@@ -69,17 +69,17 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, nuevoArchivo.nombre);
-            sentenciaEjecutable.setLong(2, nuevoArchivo.tamanoBytes);
+            sentenciaEjecutable.setString(1, nuevoArchivo.getNombre());
+            sentenciaEjecutable.setLong(2, nuevoArchivo.getTamanoBytes());
 
             java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
-                nuevoArchivo.fechaCreacion.toLocalDate()
+                nuevoArchivo.getFechaModificacion().toLocalDate()
             );
             sentenciaEjecutable.setDate(3, fechaModificacionParaSql);
 
-            sentenciaEjecutable.setString(4, nuevoArchivo.rutaCompleta);
-            sentenciaEjecutable.setString(5, nuevoArchivo.extension);
-            sentenciaEjecutable.setString(6, nuevoArchivo.categoria);
+            sentenciaEjecutable.setString(4, nuevoArchivo.getRutaCompleta());
+            sentenciaEjecutable.setString(5, nuevoArchivo.getExtension());
+            sentenciaEjecutable.setString(6, nuevoArchivo.getCategoria().getNombre());
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -104,9 +104,9 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
             sentenciaEjecutable.setString(4, nuevaPalabraClave);
 
             sentenciaEjecutable.execute();
@@ -132,9 +132,9 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
             sentenciaEjecutable.setString(4, nuevaEtiqueta);
 
             sentenciaEjecutable.execute();
@@ -154,8 +154,8 @@ public class ConectorBasedeDatos {
         boolean esPrimerComando = true;
         String consultaSQLDinamica = "SELECT * FROM ";
 
-        if (archivoFiltro.palabrasClave != null) {
-            Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
+        if (archivoFiltro.getPalabrasClave() != null) {
+            Iterator<String> iteradorPalabrasClave = archivoFiltro.getPalabrasClave().iterator();
             while(iteradorPalabrasClave.hasNext()){
                 consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
                 consultaSQLDinamica +=
@@ -175,8 +175,8 @@ public class ConectorBasedeDatos {
 
         int indiceParametro = 1;
 
-        if (archivoFiltro.palabrasClave != null) {
-            Iterator<String> iteradorPalabrasClave = archivoFiltro.palabrasClave.iterator();
+        if (archivoFiltro.getPalabrasClave() != null) {
+            Iterator<String> iteradorPalabrasClave = archivoFiltro.getPalabrasClave().iterator();
             while(iteradorPalabrasClave.hasNext()){
                 sentenciaEjecutable.setString(
                     indiceParametro++,
@@ -203,7 +203,7 @@ public class ConectorBasedeDatos {
         boolean esPrimerComando = true;
         String consultaSQLDinamica = "SELECT * FROM ";
 
-        if (archivoFiltro.palabrasClave != null) {
+        if (archivoFiltro.getPalabrasClave() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica +=
                 "sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias (?) ";
@@ -220,10 +220,10 @@ public class ConectorBasedeDatos {
 
         int indiceParametro = 1;
 
-        if (archivoFiltro.palabrasClave != null) {
+        if (archivoFiltro.getPalabrasClave() != null) {
             Array palabras_clave = conexion.createArrayOf(
                 "varchar",
-                archivoFiltro.palabrasClave.toArray()
+                archivoFiltro.getPalabrasClave().toArray()
             );
             sentenciaEjecutable.setArray(
                 indiceParametro++,
@@ -248,25 +248,25 @@ public class ConectorBasedeDatos {
         String consultaSQLDinamica
     ) throws SQLException{
 
-        if (archivoFiltro.extension != null) {
+        if (archivoFiltro.getExtension() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_extension (?) ";
             esPrimerComando = false;
         }
-        if (archivoFiltro.rutaCompleta != null) {
+        if (archivoFiltro.getRutaCompleta() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_ubicacion (?) ";
             esPrimerComando = false;
         }
-        if (archivoFiltro.categoria != null) {
+        if (archivoFiltro.getCategoria() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_categoria (?) ";
             esPrimerComando = false;
         }
-        if (archivoFiltro.etiquetas != null) {
+        if (archivoFiltro.getEtiquetas() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica +=
                 "sp_buscar_archivos_segun_etiqueta (?) ";
@@ -278,7 +278,7 @@ public class ConectorBasedeDatos {
                 "sp_buscar_archivos_segun_tamano (?, ?) ";
             esPrimerComando = false;
         }
-        if (archivoFiltro.nombre != null) {
+        if (archivoFiltro.getNombre() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
             consultaSQLDinamica += "sp_buscar_archivos_segun_nombre (?) ";
             esPrimerComando = false;
@@ -299,38 +299,38 @@ public class ConectorBasedeDatos {
         int indiceParametro
     ) throws SQLException{
 
-        if (archivoFiltro.extension != null) {
+        if (archivoFiltro.getExtension() != null) {
             sentenciaEjecutable.setString(
                 indiceParametro++,
-                archivoFiltro.extension
+                archivoFiltro.getExtension()
             );
         }
-        if (archivoFiltro.rutaCompleta != null) {
+        if (archivoFiltro.getRutaCompleta() != null) {
             sentenciaEjecutable.setString(
                 indiceParametro++,
-                archivoFiltro.rutaCompleta
+                archivoFiltro.getRutaCompleta()
             );
         }
-        if (archivoFiltro.categoria != null) {
+        if (archivoFiltro.getCategoria() != null) {
             sentenciaEjecutable.setString(
                 indiceParametro++,
-                archivoFiltro.categoria
+                archivoFiltro.getCategoria().getNombre()
             );
         }
-        if (archivoFiltro.etiquetas != null) {
+        if (archivoFiltro.getEtiquetas() != null) {
             sentenciaEjecutable.setString(
                 indiceParametro++,
-                archivoFiltro.etiquetas.get(0)
+                archivoFiltro.getEtiquetas().get(0).getNombre()
             );
         }
         if ((tamanoMinimo >= 0) && (tamanoMaximo >= 0)) {
             sentenciaEjecutable.setLong(indiceParametro++, tamanoMinimo);
             sentenciaEjecutable.setLong(indiceParametro++, tamanoMaximo);
         }
-        if (archivoFiltro.nombre != null) {
+        if (archivoFiltro.getNombre() != null) {
             sentenciaEjecutable.setString(
                 indiceParametro++,
-                archivoFiltro.nombre
+                archivoFiltro.getNombre()
             );
         }
 
@@ -379,9 +379,9 @@ public class ConectorBasedeDatos {
             );
 
             sentenciaEjecutable.setString(1, viejaUbicacion);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setString(4, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+            sentenciaEjecutable.setString(4, archivoParaModificar.getRutaCompleta());
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -406,10 +406,10 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
             sentenciaEjecutable.setString(2, viejo_nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setString(4, archivoParaModificar.nombre);
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+            sentenciaEjecutable.setString(4, archivoParaModificar.getNombre());
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -433,13 +433,13 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setLong(4, archivoParaModificar.tamanoBytes);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+            sentenciaEjecutable.setLong(4, archivoParaModificar.getTamanoBytes());
 
             java.sql.Date fechaModificacionParaSql = java.sql.Date.valueOf(
-                archivoParaModificar.fechaCreacion.toLocalDate()
+                archivoParaModificar.getFechaModificacion().toLocalDate()
             );
             sentenciaEjecutable.setDate(5, fechaModificacionParaSql);
 
@@ -465,10 +465,10 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
-            sentenciaEjecutable.setString(4, archivoParaModificar.categoria);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
+            sentenciaEjecutable.setString(4, archivoParaModificar.getCategoria().getNombre());
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
@@ -493,9 +493,9 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
             sentenciaEjecutable.setString(4, palabraClaveParaEliminar);
 
             sentenciaEjecutable.execute();
@@ -521,9 +521,9 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaModificar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaModificar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaModificar.extension);
+            sentenciaEjecutable.setString(1, archivoParaModificar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaModificar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaModificar.getExtension());
             sentenciaEjecutable.setString(4, etiquetaParaEliminar);
 
             sentenciaEjecutable.execute();
@@ -546,9 +546,9 @@ public class ConectorBasedeDatos {
                 ResultSet.CONCUR_READ_ONLY
             );
 
-            sentenciaEjecutable.setString(1, archivoParaEliminar.rutaCompleta);
-            sentenciaEjecutable.setString(2, archivoParaEliminar.nombre);
-            sentenciaEjecutable.setString(3, archivoParaEliminar.extension);
+            sentenciaEjecutable.setString(1, archivoParaEliminar.getRutaCompleta());
+            sentenciaEjecutable.setString(2, archivoParaEliminar.getNombre());
+            sentenciaEjecutable.setString(3, archivoParaEliminar.getExtension());
 
             sentenciaEjecutable.execute();
         } catch (SQLException e) {
