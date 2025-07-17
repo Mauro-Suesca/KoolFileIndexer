@@ -59,6 +59,7 @@ CREATE TABLE Etiqueta_Archivo (
 CREATE INDEX idx_etia_eti_id ON Etiqueta_Archivo (etia_eti_id);
 CREATE INDEX idx_etia_arc_id ON Etiqueta_Archivo (etia_arc_id);
 
+
 CREATE OR REPLACE FUNCTION borrar_etiqueta_si_no_usada() RETURNS TRIGGER AS $$
 BEGIN
     IF NOT EXISTS (
@@ -90,3 +91,11 @@ FOR EACH ROW
 EXECUTE FUNCTION borrar_palabra_si_no_usada();
 
 GRANT USAGE ON SCHEMA public TO kool_user;
+
+
+INSERT INTO Categoria (cat_nombre) VALUES
+  ('Documento'),
+  ('Imagen'),
+  ('Música'),
+  ('Video'),
+  ('Sin categoría');
