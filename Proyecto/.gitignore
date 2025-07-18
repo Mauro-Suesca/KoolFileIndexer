@@ -4,7 +4,12 @@
 # Ignore Gradle build output directory
 build
 bin
+dist
 
 # IDE-specific settings
 .settings/
 **/.settings/
+.project
+**/.project
+.classpath
+**/.classpath
