@@ -20,3 +20,4 @@ rootProject.name = "KoolFileIndexer"
 
 include("app")
 include("indexador")
+include("common")
