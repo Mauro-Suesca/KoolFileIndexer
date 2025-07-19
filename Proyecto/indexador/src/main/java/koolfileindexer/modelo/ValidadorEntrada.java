@@ -1,45 +1,59 @@
-package koolfileindexer.modelo;
+package modelo;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ * Valida nombres de archivo, etiquetas y palabras clave.
+ * Longitud válida: entre MIN y MAX caracteres.
+ */
 public class ValidadorEntrada {
-
     private static final int MIN = 1;
     private static final int MAX = 50;
 
-    /**
-     * Permite letras, dígitos, guiones y guion bajo, con un único espacio
-     * interno (para etiquetas).
-     */
-    private static final Pattern PATRON_ETIQUETA = Pattern.compile(
-        "^[a-z0-9_\\-]+( [a-z0-9_\\-]+)*$"
-    );
+    /** Letras, dígitos, guiones/guion bajo, un único espacio interno. */
+    private static final Pattern PATRON_ETIQUETA = Pattern.compile("^[a-z0-9_\\-]+( [a-z0-9_\\-]+)*$");
+
+    /** Letras, dígitos, guiones/guion bajo, sin espacios. */
+    private static final Pattern PATRON_PALABRA = Pattern.compile("^[a-z0-9_\\-]+$");
+
+    /** Normaliza (trim + toLowerCase) o devuelve empty si input == null. */
+    private static Optional<String> normalize(String input) {
+        if (input == null)
+            return Optional.empty();
+        return Optional.of(input.trim().toLowerCase());
+    }
 
     /**
-     * Solo letras, dígitos, guiones y guion bajo, SIN espacios (para palabras
-     * clave).
+     * Valida un nombre de archivo básico:
+     * — No nulo.
+     * — Longitud entre MIN y MAX (tras trim).
      */
-    private static final Pattern PATRON_PALABRA = Pattern.compile(
-        "^[a-z0-9_\\-]+$"
-    );
+    public static boolean esNombreArchivoValido(String nombre) {
+        return Optional.ofNullable(nombre)
+                .map(String::trim)
+                .filter(s -> s.length() >= MIN && s.length() <= MAX)
+                .isPresent();
+    }
 
+    /**
+     * @return true si la etiqueta cumple longitud y patrón (permite un único
+     *         espacio interno).
+     */
     public static boolean esEtiquetaValida(String etiqueta) {
-        return (
-            esLongitudValida(etiqueta) &&
-            PATRON_ETIQUETA.matcher(etiqueta.toLowerCase()).matches()
-        );
+        return normalize(etiqueta)
+                .filter(s -> s.length() >= MIN && s.length() <= MAX)
+                .filter(s -> PATRON_ETIQUETA.matcher(s).matches())
+                .isPresent();
     }
 
+    /**
+     * @return true si la palabra clave cumple longitud y patrón (sin espacios).
+     */
     public static boolean esPalabraClaveValida(String palabra) {
-        return (
-            esLongitudValida(palabra) &&
-            PATRON_PALABRA.matcher(palabra.toLowerCase()).matches()
-        );
-    }
-
-    private static boolean esLongitudValida(String texto) {
-        if (texto == null) return false;
-        int len = texto.trim().length();
-        return len >= MIN && len <= MAX;
+        return normalize(palabra)
+                .filter(s -> s.length() >= MIN && s.length() <= MAX)
+                .filter(s -> PATRON_PALABRA.matcher(s).matches())
+                .isPresent();
     }
 }

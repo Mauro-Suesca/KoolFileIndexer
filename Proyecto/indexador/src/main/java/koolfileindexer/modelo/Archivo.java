@@ -1,11 +1,14 @@
-package koolfileindexer.modelo;
+package modelo;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Representa un archivo con metadatos, categoría automática,
+ * etiquetas y palabras clave.
+ */
 public class Archivo {
-
     private final String nombre;
     private final String rutaCompleta;
     private final String extension;
@@ -17,38 +20,42 @@ public class Archivo {
     private final Set<String> palabrasClave = new HashSet<>();
 
     public Archivo(
-        String nombre,
-        String rutaCompleta,
-        String extension,
-        long tamanoBytes,
-        LocalDateTime fechaCreacion,
-        LocalDateTime fechaModificacion
-    ) {
-        // RN-001: nombre trim(), rutas absolutas y normalizadas
-        this.nombre = Objects.requireNonNull(nombre).trim();
+            String nombre,
+            String rutaCompleta,
+            String extension,
+            long tamanoBytes,
+            LocalDateTime fechaCreacion,
+            LocalDateTime fechaModificacion) {
+        this.nombre = Objects.requireNonNull(nombre, "Nombre no puede ser null")
+                .trim();
         this.rutaCompleta = Paths.get(rutaCompleta)
-            .toAbsolutePath()
-            .normalize()
-            .toString();
-        this.extension = (extension != null ? extension.toLowerCase() : "");
+                .toAbsolutePath()
+                .normalize()
+                .toString();
+        this.extension = extension != null
+                ? extension.toLowerCase()
+                : "";
         this.tamanoBytes = tamanoBytes;
         this.fechaCreacion = fechaCreacion;
         this.fechaModificacion = fechaModificacion;
         this.categoria = Categoria.clasificar(this);
     }
 
+    /** Un archivo oculto comienza con punto. */
     public boolean esOculto() {
         return nombre.startsWith(".");
     }
 
+    /** Valida nombre con reglas centralizadas en ValidadorEntrada. */
     public boolean esValido() {
-        return !esOculto() && !nombre.isEmpty();
+        return !esOculto()
+                && ValidadorEntrada.esNombreArchivoValido(nombre);
     }
 
     public void agregarEtiqueta(Etiqueta etiqueta) {
-        if (etiqueta == null) throw new IllegalArgumentException(
-            "Etiqueta nula"
-        );
+        if (etiqueta == null) {
+            throw new IllegalArgumentException("Etiqueta nula");
+        }
         if (!etiquetas.contains(etiqueta)) {
             etiquetas.add(etiqueta);
             actualizarFechaModificacion(LocalDateTime.now());
@@ -62,30 +69,32 @@ public class Archivo {
     }
 
     public void agregarPalabraClave(String palabra) {
-        if (!ValidadorEntrada.esPalabraClaveValida(palabra)) {
+        String token = normalizeToken(palabra);
+        if (!ValidadorEntrada.esPalabraClaveValida(token)) {
             throw new IllegalArgumentException(
-                "Palabra clave inválida: '" + palabra + "'"
-            );
+                    String.format("Palabra clave inválida: '%s'", palabra));
         }
-        if (palabrasClave.add(palabra.toLowerCase().trim())) {
+        if (palabrasClave.add(token)) {
             actualizarFechaModificacion(LocalDateTime.now());
         }
     }
 
     public void eliminarPalabraClave(String palabra) {
-        if (palabrasClave.remove(palabra.toLowerCase().trim())) {
+        String token = normalizeToken(palabra);
+        if (palabrasClave.remove(token)) {
             actualizarFechaModificacion(LocalDateTime.now());
         }
     }
 
     public boolean modificarPalabraClave(String antigua, String nueva) {
-        String orig = Objects.requireNonNull(antigua).toLowerCase().trim();
-        String neu = Objects.requireNonNull(nueva).toLowerCase().trim();
-        if (!palabrasClave.contains(orig)) return false;
-        if (!ValidadorEntrada.esPalabraClaveValida(nueva)) {
+        String orig = normalizeToken(antigua);
+        String neu = normalizeToken(nueva);
+        if (!palabrasClave.contains(orig)) {
+            return false;
+        }
+        if (!ValidadorEntrada.esPalabraClaveValida(neu)) {
             throw new IllegalArgumentException(
-                "Nueva palabra clave inválida: '" + nueva + "'"
-            );
+                    String.format("Nueva palabra clave inválida: '%s'", nueva));
         }
         palabrasClave.remove(orig);
         palabrasClave.add(neu);
@@ -98,7 +107,24 @@ public class Archivo {
     }
 
     public void asignarCategoria(Categoria categoria) {
-        if (categoria != null) this.categoria = categoria;
+        if (categoria != null) {
+            this.categoria = categoria;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Archivo))
+            return false;
+        Archivo that = (Archivo) o;
+        return rutaCompleta.equalsIgnoreCase(that.rutaCompleta);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rutaCompleta.toLowerCase());
     }
 
     public String getNombre() {
@@ -133,31 +159,25 @@ public class Archivo {
         return Collections.unmodifiableSet(palabrasClave);
     }
 
-    private void actualizarFechaModificacion(LocalDateTime nuevaFecha) {
+    /** Normaliza tokens: trim + toLowerCase. */
+    private String normalizeToken(String token) {
+        return Objects.requireNonNull(token, "Token no puede ser null")
+                .toLowerCase()
+                .trim();
+    }
+
+    public void actualizarFechaModificacion(LocalDateTime nuevaFecha) {
         this.fechaModificacion = Objects.requireNonNull(nuevaFecha);
     }
 
     @Override
     public String toString() {
+        // Línea única para logs
         return String.format(
-            "Archivo{\n" +
-            "  nombre       : '%s',\n" +
-            "  ruta         : '%s',\n" +
-            "  extensión    : '%s',\n" +
-            "  tamaño       : %d bytes,\n" +
-            "  modificado   : %s,\n" +
-            "  categoría    : %s,\n" +
-            "  etiquetas    : %s,\n" +
-            "  palabrasClave: %s\n" +
-            "}",
-            nombre,
-            rutaCompleta,
-            extension,
-            tamanoBytes,
-            fechaModificacion,
-            categoria.getNombre(),
-            etiquetas,
-            palabrasClave
-        );
+                "Archivo[nombre=%s, ruta=%s, ext=%s, tam=%dB, mod=%s, cat=%s, tags=%s, keys=%s]",
+                nombre, rutaCompleta, extension,
+                tamanoBytes, fechaModificacion,
+                categoria.getNombre(),
+                etiquetas, palabrasClave);
     }
 }
