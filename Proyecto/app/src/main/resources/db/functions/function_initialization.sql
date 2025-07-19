@@ -1,12 +1,13 @@
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_extension(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_extension(extension_deseada VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Extension
     JOIN Archivo ON ext_id = arc_ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE ext_extension = extension_deseada;
 END;
 $$ LANGUAGE plpgsql
@@ -19,12 +20,13 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_extension(VARCHAR) TO 
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_ubicacion(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_ubicacion(ubicacion_deseada VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Extension
     JOIN Archivo ON ext_id = arc_ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE arc_path = ubicacion_deseada;
 END;
 $$ LANGUAGE plpgsql
@@ -37,10 +39,10 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_ubicacion(VARCHAR) TO 
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_categoria(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_categoria(categoria_deseada VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Categoria
     JOIN Archivo ON cat_id = arc_cat_id
     JOIN Extension ON arc_ext_id = ext_id
@@ -56,14 +58,15 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_categoria(VARCHAR) TO 
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_etiqueta(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_etiqueta(etiqueta_deseada VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Etiqueta
     JOIN Etiqueta_Archivo ON eti_id = etia_eti_id
     JOIN Archivo ON etia_arc_id = arc_id
     JOIN Extension ON arc_ext_id = ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE eti_nombre = etiqueta_deseada;
 END;
 $$ LANGUAGE plpgsql
@@ -76,14 +79,15 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_etiqueta(VARCHAR) TO k
 DROP FUNCTION IF EXISTS sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(VARCHAR[]);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_con_minimo_una_palabra_clave_de_varias(palabras_deseadas VARCHAR[])
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Palabra_clave
     JOIN Archivo_Palabra_clave ON pal_id = arcp_pal_id
     JOIN Archivo ON arcp_arc_id = arc_id
     JOIN Extension ON arc_ext_id = ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE pal_palabra = ANY(palabras_deseadas);
 END;
 $$ LANGUAGE plpgsql
@@ -96,14 +100,15 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_minimo_una_palabra_clave
 DROP FUNCTION IF EXISTS sp_buscar_archivos_con_una_palabra_clave_dada(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_con_una_palabra_clave_dada(palabra_deseada VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Palabra_clave
     JOIN Archivo_Palabra_clave ON pal_id = arcp_pal_id
     JOIN Archivo ON arcp_arc_id = arc_id
     JOIN Extension ON arc_ext_id = ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE pal_palabra = palabra_deseada;
 END;
 $$ LANGUAGE plpgsql
@@ -116,12 +121,13 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_con_una_palabra_clave_dada(V
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_tamano(BIGINT, BIGINT);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_tamano(tamano_minimo BIGINT, tamano_maximo BIGINT)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Archivo
     JOIN Extension ON arc_ext_id = ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE arc_tamano BETWEEN tamano_minimo AND tamano_maximo;
 END;
 $$ LANGUAGE plpgsql
@@ -134,12 +140,13 @@ GRANT EXECUTE ON FUNCTION public.sp_buscar_archivos_segun_tamano(BIGINT, BIGINT)
 DROP FUNCTION IF EXISTS sp_buscar_archivos_segun_nombre(VARCHAR);
 
 CREATE OR REPLACE FUNCTION sp_buscar_archivos_segun_nombre(patron VARCHAR)
-RETURNS TABLE(archivo TEXT) AS $$
+RETURNS TABLE(id INT, path VARCHAR, nombre VARCHAR, extension VARCHAR, tamano BIGINT, fecha_modificacion DATE, categoria VARCHAR) AS $$
 BEGIN
   RETURN QUERY
-    SELECT arc_path || '/' || arc_nombre || '.' || ext_extension
+    SELECT arc_id, arc_path, arc_nombre, ext_extension, arc_tamano, arc_fecha_modificacion, cat_nombre
     FROM Archivo
     JOIN Extension ON arc_ext_id = ext_id
+    JOIN Categoria ON arc_cat_id = cat_id
     WHERE LOWER(arc_nombre) LIKE '%' || LOWER(patron) || '%';
 END;
 $$ LANGUAGE plpgsql
