@@ -9,6 +9,8 @@ dist
 # IDE-specific settings
 .settings/
 **/.settings/
+.vscode/
+**/.vscode/
 .project
 **/.project
 .classpath

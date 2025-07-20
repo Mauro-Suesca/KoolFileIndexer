@@ -34,7 +34,7 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass = "koolfileindexer.App"
-    mainModule = "koolfileindexer"
+    mainModule = "app"
     applicationDefaultJvmArgs =
         listOf(
             "--add-modules=javafx.controls,javafx.fxml",
@@ -52,21 +52,23 @@ application {
 }
 
 jlink {
-    var currentOs = org.gradle.internal.os.OperatingSystem.current()
-    imageDir.set(file("${rootProject.projectDir}/dist/${currentOs.name}"))
-    imageZip.set(file("${rootProject.projectDir}/dist/${currentOs.name}/koolfileindexer.zip"))
-
-    options = listOf(
+    options.addAll(listOf(
         "--strip-debug",
-        "--compress=2",
+        "--compress", "2",
         "--no-header-files",
         "--no-man-pages"
-    )
-
+    ))
+    addExtraDependencies("javafx")
     launcher {
         name = "KoolFileIndexer"
+    }
+    jpackage {
+        imageName = "KoolFileIndexer"
+        appVersion = "1.0.0"
+        vendor = "Equipo A"
+        description = "KoolFileIndexer - Indexador de archivos multiplataforma."
+        skipInstaller = true
         jvmArgs = listOf(
-            "-Dfile.encoding=UTF-8",
             "--add-modules=javafx.controls,javafx.fxml",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
@@ -80,64 +82,4 @@ jlink {
             "--add-opens=javafx.graphics/com.sun.javafx.scene.traversal=ALL-UNNAMED"
         )
     }
-
-    jpackage {
-        outputDir = file("${rootProject.projectDir}/dist/${currentOs.name}").absolutePath
-
-        when {
-            currentOs.isWindows -> {
-                // Windows-specific configuration
-                installerType = "exe"
-                imageOptions = listOf(
-                    "--win-dir-chooser",
-                    "--win-shortcut",
-                    "--win-menu"
-                )
-                installerOptions = listOf(
-                    "--win-dir-chooser",
-                    "--win-per-user-install",
-                    "--win-shortcut",
-                    "--win-menu"
-                )
-            }
-            currentOs.isMacOsX -> {
-                // macOS-specific configuration
-                installerType = "dmg"
-                imageOptions = listOf()
-                installerOptions = listOf(
-                    "--mac-package-name", "KoolFileIndexer",
-                    "--mac-package-version", "1.0",
-                    "--mac-package-identifier", "koolfileindexer.app"
-                )
-            }
-            currentOs.isLinux -> {
-                // Linux-specific configuration
-                installerType = "deb"
-                imageOptions = listOf()
-                installerOptions = listOf(
-                    "--linux-package-name", "koolfileindexer",
-                    "--linux-package-version", "1.0",
-                    "--linux-package-architecture", "amd64",
-                    "--linux-package-description", "Kool File Indexer",
-                    "--linux-package-url", "https://github.com/Mauro-Suesca/KoolFileIndexer",
-                    "--linux-package-maintainer", "ThePixelCode <thepixelcode@proton.me>",
-                    "--linux-package-depends", "java-runtime",
-                    "--linux-shortcut",
-                    "--linux-menu-group", "Utilities"
-                )
-            }
-            else -> {
-                // Unsupported OS
-                throw UnsupportedOperationException("Unsupported OS")
-            }
-        }
-
-        appVersion = "1.0"
-        vendor = "ThePixelCode"
-        description = "Kool File Indexer"
-    }
-}
-
-tasks.register("buildAllPlatforms") {
-    // TODO
 }
