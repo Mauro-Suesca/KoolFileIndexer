@@ -4,4 +4,6 @@ module app {
     requires java.desktop;
 
     requires common;
+
+    exports koolfileindexer to javafx.graphics;
 }
