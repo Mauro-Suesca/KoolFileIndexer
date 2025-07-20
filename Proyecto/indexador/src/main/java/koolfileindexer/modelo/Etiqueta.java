@@ -15,7 +15,7 @@ public class Etiqueta {
 
     /**
      * Crea y valida una nueva Etiqueta.
-     * 
+     *
      * @param nombre texto de la etiqueta; no nulo, 1–50 chars,
      *               letras/dígitos/guión/espacio simple.
      * @return una instancia nueva con nombre en minúsculas.
@@ -27,7 +27,7 @@ public class Etiqueta {
 
     /**
      * Renombra esta etiqueta.
-     * 
+     *
      * @param nuevoNombre mismo formato y reglas que crear().
      * @throws IllegalArgumentException si el nuevo nombre no cumple las reglas.
      */
@@ -63,7 +63,7 @@ public class Etiqueta {
 
     /**
      * Valida y normaliza un texto según las reglas de etiquetas.
-     * 
+     *
      * @param input    texto original
      * @param contexto descripción para mensajes de error
      * @return texto normalizado (trim + toLowerCase)

@@ -18,7 +18,7 @@ public class GestorEtiquetas {
     /**
      * Elimina de todos los archivos cualquier etiqueta que no esté presente en
      * ningún Archivo.
-     * 
+     *
      * @return Set de etiquetas eliminadas
      */
     public Set<Etiqueta> eliminarHuérfanas() {
@@ -55,7 +55,6 @@ public class GestorEtiquetas {
                 }
             }
         }
-        Etiqueta nueva = Etiqueta.crear(nombre);
-        return nueva;
+        return Etiqueta.crear(nombre);
     }
 }

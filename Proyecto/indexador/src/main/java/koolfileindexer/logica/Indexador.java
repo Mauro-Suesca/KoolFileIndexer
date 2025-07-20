@@ -1,41 +1,92 @@
 package logica;
 
 import modelo.Archivo;
+import modelo.ArchivoConnector;
 import modelo.Categoria;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Indexador recorre carpetas, aplica exclusiones y mantiene un índice
- * en memoria de archivos, detectando duplicados/renombres vía fileKey.
+ * Indexador recorre carpetas por lotes, aplica exclusiones
+ * y delega persistencia en BD vía ArchivoConnector.
  */
 public class Indexador {
-    // --- Singleton ---
-    private static Indexador instancia;
+    // ─── Singleton ───────────────────────────────────────────────
+    private static final AtomicReference<Indexador> INSTANCIA = new AtomicReference<>();
 
-    private Indexador(String archivoExclusiones) {
+    /**
+     * Devuelve la instancia única de Indexador, inicializándola la primera vez.
+     *
+     * @param archivoExclusiones ruta al fichero de exclusiones
+     * @param connector          implementación de ArchivoConnector
+     */
+    public static Indexador getInstance(String archivoExclusiones, ArchivoConnector connector) {
+        INSTANCIA.compareAndSet(null, new Indexador(archivoExclusiones, connector));
+        return INSTANCIA.get();
+    }
+
+    private final ArchivoConnector connector;
+
+    // ─── Exclusiones ──────────────────────────────────────────────
+    private final Set<Path> rutasExcluidas = new HashSet<>();
+    private static final Set<String> EXT_PROHIBIDAS = Set.of("exe", "dll");
+    private static final Set<String> PATRONES_PROTEGIDOS = Set.of("windows");
+
+    // ─── Scheduler y batching ─────────────────────────────────────
+    private ScheduledExecutorService scheduler;
+    private Duration intervalo = Duration.ofMinutes(5);
+    private int batchSize = 100;
+
+    private Indexador(String archivoExclusiones, ArchivoConnector connector) {
+        this.connector = Objects.requireNonNull(connector, "connector no puede ser null");
         cargarExclusiones(archivoExclusiones);
     }
 
-    public static synchronized Indexador getInstance(String archivoExclusiones) {
-        if (instancia == null) {
-            instancia = new Indexador(archivoExclusiones);
+    /**
+     * Arranca la indexación periódica.
+     *
+     * @param raiz      carpeta raíz a indexar
+     * @param batchSize número máximo de ficheros por pase
+     * @param intervalo intervalo entre pasadas
+     */
+    public synchronized void iniciarIndexacionPeriodica(Path raiz, int batchSize, Duration intervalo) {
+        // CAMBIO REQUERIDO: Añadido log de inicio de scheduler
+        System.out.println("[SCHEDULER] Configurando indexación periódica:");
+        System.out.println(" - Intervalo: cada " + intervalo.toMinutes() + " minutos");
+        System.out.println(" - Tamaño de lote: " + batchSize + " archivos por ciclo");
+
+        this.batchSize = batchSize;
+        this.intervalo = intervalo;
+
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
         }
-        return instancia;
+
+        // CAMBIO REQUERIDO: Thread no-daemon y log de ciclo
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "Indexador-Scheduler");
+            t.setDaemon(false); // CAMBIO IMPORTANTE: Hilo de usuario
+            return t;
+        });
+
+        scheduler.scheduleAtFixedRate(() -> {
+            System.out.println("\n[SCHEDULER] Iniciando ciclo de indexación a las " + LocalDateTime.now());
+            recorrerDirectorio(raiz, this.batchSize);
+            System.out.println("[SCHEDULER] Ciclo completado a las " + LocalDateTime.now());
+        }, 0, intervalo.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    // --- Índice en memoria por key (thread-safe) ---
-    private final Map<Object, Archivo> archivosPorKey = new ConcurrentHashMap<>();
-
-    // --- Exclusiones ---
-    private final Set<Path> rutasExcluidas = new HashSet<>();
+    // ─── Exclusiones ──────────────────────────────────────────────
 
     private void cargarExclusiones(String archivoExclusiones) {
         if (archivoExclusiones == null || archivoExclusiones.isBlank())
@@ -46,7 +97,7 @@ public class Indexador {
         try {
             Files.readAllLines(path).stream()
                     .map(String::trim)
-                    .filter(s -> !s.isEmpty() && !s.startsWith("#")) // ignorar líneas vacías y comentarios
+                    .filter(s -> !s.isEmpty() && !s.startsWith("#"))
                     .map(Paths::get)
                     .map(Path::toAbsolutePath)
                     .map(Path::normalize)
@@ -61,8 +112,54 @@ public class Indexador {
         return Collections.unmodifiableSet(rutasExcluidas);
     }
 
-    /** Recorre recursivamente desde rutaBase e indexa cada archivo válido. */
-    public void recorrerDirectorio(Path rutaBase) {
+    /**
+     * True si p está bajo alguna ruta excluida, oculto, protegido o con extensión
+     * prohibida.
+     */
+    private boolean excluirArchivo(Path p) {
+        Path norm = p.toAbsolutePath().normalize();
+
+        for (Path excl : rutasExcluidas) {
+            if (norm.startsWith(excl)) {
+                return true;
+            }
+        }
+
+        String nombre = norm.getFileName().toString().toLowerCase();
+
+        try {
+            if (Files.isHidden(norm))
+                return true;
+        } catch (IOException ignored) {
+        }
+        if (nombre.startsWith("."))
+            return true;
+
+        int idx = nombre.lastIndexOf('.');
+        if (idx >= 0 && EXT_PROHIBIDAS.contains(nombre.substring(idx + 1))) {
+            return true;
+        }
+
+        String rutaMin = norm.toString().toLowerCase();
+        for (String pat : PATRONES_PROTEGIDOS) {
+            if (rutaMin.contains(File.separator + pat)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // ─── Recorrido con batching ─────────────────────────────────────
+
+    /**
+     * Recorre recursivamente desde rutaBase e indexa hasta batchSize archivos.
+     */
+    public void recorrerDirectorio(Path rutaBase, int batchSize) {
+        // CAMBIO REQUERIDO: Añadido log de inicio de recorrido
+        System.out.println("[BATCH] Iniciando recorrido en: " + rutaBase);
+        System.out.println("[BATCH] Máximo de archivos a procesar: " + batchSize);
+
         Path base;
         try {
             base = rutaBase.toAbsolutePath().normalize();
@@ -75,21 +172,27 @@ public class Indexador {
             return;
         }
 
+        AtomicInteger procesados = new AtomicInteger();
+
         try {
             Files.walkFileTree(base, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (estaExcluido(dir) || esOcultoOSistema(dir)) {
-                        return FileVisitResult.SKIP_SUBTREE;
+                    if (excluirArchivo(dir) || procesados.get() >= batchSize) {
+                        return procesados.get() >= batchSize
+                                ? FileVisitResult.TERMINATE
+                                : FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (attrs.isRegularFile()
-                            && !estaExcluido(file)
-                            && !esOcultoOSistema(file)) {
+                    if (procesados.get() >= batchSize) {
+                        return FileVisitResult.TERMINATE;
+                    }
+                    if (attrs.isRegularFile() && !excluirArchivo(file)) {
+                        procesados.incrementAndGet();
                         procesarArchivo(file, attrs);
                     }
                     return FileVisitResult.CONTINUE;
@@ -105,104 +208,57 @@ public class Indexador {
         } catch (IOException e) {
             System.err.println("Error recorriendo directorio: " + e.getMessage());
         }
+
+        // CAMBIO REQUERIDO: Log de resumen del batch
+        System.out.println("[BATCH] Procesados " + procesados.get() + " archivos en este ciclo");
     }
 
-    /** True si p está bajo alguna ruta excluida. */
-    private boolean estaExcluido(Path p) {
-        Path norm = p.toAbsolutePath().normalize();
-        return rutasExcluidas.stream().anyMatch(norm::startsWith);
-    }
-
-    /** Ocultos/SO/Windows/.exe/.dll. */
-    private boolean esOcultoOSistema(Path p) {
-        try {
-            if (Files.isHidden(p))
-                return true;
-        } catch (IOException ignored) {
-        }
-        String name = p.getFileName().toString().toLowerCase();
-        if (name.startsWith("."))
-            return true;
-        if (name.endsWith(".exe") || name.endsWith(".dll"))
-            return true;
-        String full = p.toAbsolutePath().normalize().toString().toLowerCase();
-        return full.contains(File.separator + "windows");
-    }
+    // ─── Procesamiento / Persistencia ───────────────────────────────
 
     /**
-     * Crea/actualiza un Archivo en el índice, usando fileKey (o fallback).
+     * Construye un objeto Archivo con los metadatos y lo inserta
+     * o actualiza en BD según exista o no via connector.findByMetadata().
      */
     private void procesarArchivo(Path p, BasicFileAttributes attrs) {
-        // 1) Extraer fileKey nativo o generar fallback
-        Object key = obtenerFileKey(attrs, p);
-        if (key == null) {
-            key = generarFallbackKey(p, attrs);
-        }
+        Archivo a = crearArchivoDesdePath(p, attrs);
 
-        // 2) Insertar o actualizar según exista la clave
-        if (archivosPorKey.containsKey(key)) {
-            Archivo existente = archivosPorKey.get(key);
+        Optional<Archivo> opt = connector.findByMetadata(
+                attrs.size(),
+                attrs.creationTime().toMillis(),
+                a.getExtension());
+
+        if (opt.isPresent()) {
+            Archivo existente = opt.get();
             existente.asignarCategoria(Categoria.clasificar(existente));
             existente.actualizarFechaModificacion(
                     LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault()));
-            System.out.println("[Actualizado] " + existente.getRutaCompleta());
+            connector.update(existente);
+            System.out.println("[ACTUALIZADO] " + existente.getRutaCompleta());
         } else {
-            Archivo a = crearArchivoDesdePath(p, attrs);
-            archivosPorKey.put(key, a);
-            imprimirArchivo(a);
+            Long newId = connector.insert(a);
+            a.setId(newId);
+            System.out.println("[INSERTADO]  " + a.getRutaCompleta());
         }
     }
 
+    /** Extrae metadatos y crea el objeto dominio Archivo. */
     private Archivo crearArchivoDesdePath(Path p, BasicFileAttributes attrs) {
         String nombre = p.getFileName().toString();
         String ruta = p.toAbsolutePath().normalize().toString();
-        String ext = "";
+
         int idx = nombre.lastIndexOf('.');
-        if (idx > 0 && idx < nombre.length() - 1) {
-            ext = nombre.substring(idx + 1).toLowerCase();
-        }
+        String ext = (idx > 0 && idx < nombre.length() - 1)
+                ? nombre.substring(idx + 1).toLowerCase()
+                : "";
 
         long tam = attrs.size();
-        LocalDateTime cre = LocalDateTime.ofInstant(attrs.creationTime().toInstant(), ZoneId.systemDefault());
-        LocalDateTime mod = LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault());
+        LocalDateTime cre = LocalDateTime.ofInstant(
+                attrs.creationTime().toInstant(), ZoneId.systemDefault());
+        LocalDateTime mod = LocalDateTime.ofInstant(
+                attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault());
 
         Archivo a = new Archivo(nombre, ruta, ext, tam, cre, mod);
         a.asignarCategoria(Categoria.clasificar(a));
         return a;
-    }
-
-    private void imprimirArchivo(Archivo a) {
-        System.out.println();
-        System.out.println("=== Archivo indexado ===");
-        System.out.println("Nombre        : " + a.getNombre());
-        System.out.println("Ruta          : " + a.getRutaCompleta());
-        System.out.println("Extensión     : " + a.getExtension());
-        System.out.println("Tamaño        : " + a.getTamanoBytes() + " bytes");
-        System.out.println("Última modif. : " + a.getFechaModificacion());
-        System.out.println("Categoría     : " + a.getCategoria().getNombre());
-        System.out.println("Etiquetas     : " + a.getEtiquetas());
-        System.out.println("Palabras clave: " + a.getPalabrasClave());
-        System.out.println("========================");
-        System.out.println();
-    }
-
-    /** Extrae fileKey del FS (requiere attrs ya leídos). */
-    protected Object obtenerFileKey(BasicFileAttributes attrs, Path p) {
-        try {
-            return attrs.fileKey();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /** Fallback: hash de ruta + tamaño + fecha de creación. */
-    private Object generarFallbackKey(Path p, BasicFileAttributes attrs) {
-        String ruta = p.toAbsolutePath().normalize().toString();
-        return Objects.hash(ruta, attrs.size(), attrs.creationTime().toMillis());
-    }
-
-    /** Devuelve el índice actual (solo lectura). */
-    public Collection<Archivo> getArchivosIndexados() {
-        return Collections.unmodifiableCollection(archivosPorKey.values());
     }
 }

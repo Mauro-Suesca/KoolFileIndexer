@@ -20,12 +20,13 @@ public class DemoDominio {
 
         // 1) Crear Archivo y probar normalización de nombre y ruta
         Archivo a1 = new Archivo(
-                "  MiDoc.TXT  ",
-                "C:/Temp/../TempCarpeta/archivo.TXT",
-                "TXT",
-                2048,
-                LocalDateTime.of(2025, 7, 1, 10, 0),
-                LocalDateTime.of(2025, 7, 1, 10, 0));
+            "  MiDoc.TXT  ",
+            "C:/Temp/../TempCarpeta/archivo.TXT",
+            "TXT",
+            2048,
+            LocalDateTime.of(2025, 7, 1, 10, 0),
+            LocalDateTime.of(2025, 7, 1, 10, 0)
+        );
         System.out.println("Archivo creado:");
         System.out.println(a1);
         System.out.println("· Ruta normalizada:   " + a1.getRutaCompleta());
@@ -34,21 +35,23 @@ public class DemoDominio {
 
         // 2) Ocultos y válidos
         Archivo oculto = new Archivo(
-                ".oculto",
-                "C:/ruta/oculto.txt",
-                "txt",
-                100,
-                LocalDateTime.now(),
-                LocalDateTime.now());
+            ".oculto",
+            "C:/ruta/oculto.txt",
+            "txt",
+            100,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
         System.out.println("\n· esOculto('.oculto'): " + oculto.esOculto());
         System.out.println("· esValido('.oculto'): " + oculto.esValido());
         Archivo invalido = new Archivo(
-                "   ",
-                "C:/ruta/blank.txt",
-                "txt",
-                100,
-                LocalDateTime.now(),
-                LocalDateTime.now());
+            "   ",
+            "C:/ruta/blank.txt",
+            "txt",
+            100,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
         System.out.println("· esValido('   '):      " + invalido.esValido());
 
         // 3) Etiquetas
@@ -89,23 +92,25 @@ public class DemoDominio {
 
         // 5) Fecha modificación
         System.out.println("\nFecha modif tras cambios: " +
-                a1.getFechaModificacion().truncatedTo(ChronoUnit.SECONDS));
+            a1.getFechaModificacion().truncatedTo(ChronoUnit.SECONDS));
 
         // 6) Comparación de rutas case-insensitive
         Archivo a2 = new Archivo(
-                "archivo",
-                a1.getRutaCompleta().toUpperCase(),
-                "TXT",
-                2048,
-                LocalDateTime.now(),
-                LocalDateTime.now());
+            "archivo",
+            a1.getRutaCompleta().toUpperCase(),
+            "TXT",
+            2048,
+            LocalDateTime.now(),
+            LocalDateTime.now()
+        );
         System.out.println("\nRutas iguales ignoreCase: " +
-                a1.getRutaCompleta().equalsIgnoreCase(a2.getRutaCompleta()));
+            a1.getRutaCompleta().equalsIgnoreCase(a2.getRutaCompleta()));
 
-        // 7) Igualdad de Categoria
-        Categoria c1 = Categoria.clasificar(a1);
+        // 7) Igualdad de Categoría
+        Categoria c1 = a1.getCategoria();
         Categoria c2 = Categoria.DOCUMENTO;
-        System.out.println("\nCategoria.equals:        " + c1.equals(c2));
+        System.out.println("\nCategoria.equals:        " +
+            c1.equals(c2));
 
         System.out.println("\n=== FIN DEMO DOMINIO ===");
     }
@@ -113,20 +118,22 @@ public class DemoDominio {
     /** Helper para probar validación de etiquetas. */
     private static void probarValidacionEtiqueta(String s) {
         System.out.printf(
-                "Probar etiqueta '%s': %s%n",
-                s,
-                ValidadorEntrada.esEtiquetaValida(s)
-                        ? "OK (pero debería FALLAR)"
-                        : "FALLA correctamente");
+            "Probar etiqueta '%s': %s%n",
+            s,
+            ValidadorEntrada.esEtiquetaValida(s)
+                ? "OK (pero debería FALLAR)"
+                : "FALLA correctamente"
+        );
     }
 
     /** Helper para probar validación de palabras clave. */
     private static void probarValidacionPalabraClave(String s) {
         System.out.printf(
-                "Probar palabra  '%s': %s%n",
-                s,
-                ValidadorEntrada.esPalabraClaveValida(s)
-                        ? "OK (pero debería FALLAR)"
-                        : "FALLA correctamente");
+            "Probar palabra  '%s': %s%n",
+            s,
+            ValidadorEntrada.esPalabraClaveValida(s)
+                ? "OK (pero debería FALLAR)"
+                : "FALLA correctamente"
+        );
     }
 }
