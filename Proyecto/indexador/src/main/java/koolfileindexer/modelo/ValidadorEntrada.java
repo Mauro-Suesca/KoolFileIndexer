@@ -1,4 +1,4 @@
-package modelo;
+package koolfileindexer.modelo;
 
 import java.util.Optional;
 import java.util.regex.Pattern;

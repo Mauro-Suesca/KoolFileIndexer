@@ -1,7 +1,7 @@
-package logica;
+package koolfileindexer.logica;
 
-import modelo.Archivo;
-import modelo.ArchivoConnector;
+import koolfileindexer.modelo.Archivo;
+import koolfileindexer.modelo.ArchivoConnector;
 import java.util.*;
 
 public class InMemoryArchivoConnector implements ArchivoConnector {

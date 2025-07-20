@@ -1,6 +1,8 @@
 package logica;
 
-import modelo.ArchivoConnector;
+import koolfileindexer.modelo.ArchivoConnector;
+import koolfileindexer.logica.InMemoryArchivoConnector;
+import koolfileindexer.logica.Indexador;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;

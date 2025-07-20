@@ -1,8 +1,8 @@
-package logica;
+package koolfileindexer.logica;
 
-import modelo.Archivo;
-import modelo.ArchivoConnector;
-import modelo.Categoria;
+import koolfileindexer.modelo.Archivo;
+import koolfileindexer.modelo.ArchivoConnector;
+import koolfileindexer.modelo.Categoria;
 
 import java.io.File;
 import java.io.IOException;

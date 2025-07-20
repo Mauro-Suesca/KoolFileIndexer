@@ -1,10 +1,10 @@
-package modelo;
+package koolfileindexer.modelo;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
-import modelo.ValidadorEntrada; // para las validaciones de nombre/etiqueta
-import modelo.Categoria; // queda para toString() y equals()/hashCode()
+import koolfileindexer.modelo.ValidadorEntrada; // para las validaciones de nombre/etiqueta
+import koolfileindexer.modelo.Categoria; // queda para toString() y equals()/hashCode()
 
 /**
  * Representa un archivo con metadatos, categoría automática,
