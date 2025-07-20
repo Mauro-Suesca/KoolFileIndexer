@@ -20,8 +20,13 @@ javafx {
 }
 
 dependencies {
+    implementation(project(":common"))
     implementation("org.apache.commons:commons-text")
     implementation("org.postgresql:postgresql:42.7.7")
+    implementation("org.openjfx:javafx-controls:21")
+    implementation("org.openjfx:javafx-fxml:21")
+    implementation("org.openjfx:javafx-base:21")
+    implementation("org.openjfx:javafx-graphics:21")
     testImplementation("junit:junit:4.13.2")
 }
 
