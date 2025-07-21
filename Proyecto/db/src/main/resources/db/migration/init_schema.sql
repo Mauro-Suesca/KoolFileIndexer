@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS
 
 CREATE TABLE Extension (
     ext_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    ext_extension VARCHAR(10) NOT NULL UNIQUE
+    ext_extension VARCHAR(200) NOT NULL UNIQUE
 );
 
 CREATE TABLE Etiqueta (
@@ -24,10 +24,10 @@ CREATE TABLE Categoria (
 
 CREATE TABLE Archivo (
     arc_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    arc_nombre VARCHAR(50) NOT NULL,
+    arc_nombre VARCHAR(200) NOT NULL,
     arc_tamano BIGINT NOT NULL, -- En Bytes
     arc_fecha_modificacion DATE NOT NULL,
-    arc_path VARCHAR(100) NOT NULL,
+    arc_path VARCHAR(200) NOT NULL,
     arc_ext_id INTEGER NOT NULL REFERENCES Extension (ext_id),
     arc_cat_id INTEGER NOT NULL REFERENCES Categoria (cat_id)
 );
