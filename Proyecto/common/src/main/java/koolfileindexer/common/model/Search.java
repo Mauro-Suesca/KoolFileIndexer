@@ -16,6 +16,18 @@ public class Search implements IntoStr {
         this.filters = filters;
     }
 
+    public String[] getKeywords() {
+        return keywords;
+    }
+
+    public String[] getTags() {
+        return tags;
+    }
+
+    public String[] getFilters() {
+        return filters;
+    }
+
     /**
      * Expects format:
      * keywords: {numner_of_keywords}
