@@ -3,16 +3,13 @@ package koolfileindexer.modelo;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
-import koolfileindexer.modelo.ValidadorEntrada; // para las validaciones de nombre/etiqueta
-import koolfileindexer.modelo.Categoria; // queda para toString() y equals()/hashCode()
 
 /**
  * Representa un archivo con metadatos, categoría automática,
  * etiquetas y palabras clave, y un identificador de BD.
  */
 public class Archivo {
-    private Long id; // PK en BD
-
+    private Long id;
     private final String nombre;
     private final String rutaCompleta;
     private final String extension;
@@ -20,33 +17,58 @@ public class Archivo {
     private final LocalDateTime fechaCreacion;
     private LocalDateTime fechaModificacion;
     private Categoria categoria;
-    private final List<Etiqueta> etiquetas = new ArrayList<>();
+    private final Set<Etiqueta> etiquetas = new HashSet<>();
     private final Set<String> palabrasClave = new HashSet<>();
 
-    public Archivo(
-            String nombre,
-            String rutaCompleta,
-            String extension,
-            long tamanoBytes,
-            LocalDateTime fechaCreacion,
+    public Archivo(String nombre, String rutaCompleta, String extension,
+            long tamanoBytes, LocalDateTime fechaCreacion,
             LocalDateTime fechaModificacion) {
-        this.nombre = Objects.requireNonNull(nombre, "Nombre no puede ser null")
-                .trim();
+
+        // Validar nombre
+        if (nombre == null) {
+            throw new IllegalArgumentException("nombre no puede ser null");
+        }
+        if (nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("nombre no puede estar vacío");
+        }
+        this.nombre = nombre.trim();
+
+        // Validar ruta
+        if (rutaCompleta == null) {
+            throw new IllegalArgumentException("rutaCompleta no puede ser null");
+        }
+        if (rutaCompleta.trim().isEmpty()) {
+            throw new IllegalArgumentException("rutaCompleta no puede estar vacía");
+        }
         this.rutaCompleta = Paths.get(rutaCompleta)
                 .toAbsolutePath()
                 .normalize()
                 .toString();
-        this.extension = extension != null
-                ? extension.toLowerCase()
-                : "";
+
+        // Validar extensión
+        if (extension == null) {
+            throw new IllegalArgumentException("extension no puede ser null");
+        }
+        this.extension = extension.trim().toLowerCase();
+
+        // Validar tamaño
+        if (tamanoBytes < 0) {
+            throw new IllegalArgumentException("tamanoBytes no puede ser negativo");
+        }
         this.tamanoBytes = tamanoBytes;
+
+        // Validar fechas
+        if (fechaCreacion == null) {
+            throw new IllegalArgumentException("fechaCreacion no puede ser null");
+        }
+        if (fechaModificacion == null) {
+            throw new IllegalArgumentException("fechaModificacion no puede ser null");
+        }
         this.fechaCreacion = fechaCreacion;
         this.fechaModificacion = fechaModificacion;
-        // ahora existe clasificar(Archivo) que usa la lógica por extensión:
+
         this.categoria = Categoria.clasificar(this);
     }
-
-    // ─── ID ─────────────────────────────────────────────────────────────────────
 
     /** PK de la tabla en BD. */
     public Long getId() {
@@ -55,10 +77,14 @@ public class Archivo {
 
     /** Sólo debe llamarse tras insert() en la BD. */
     public void setId(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id no puede ser null");
+        }
+        if (id <= 0) {
+            throw new IllegalArgumentException("id debe ser positivo");
+        }
         this.id = id;
     }
-
-    // ─── Validación y metadatos ─────────────────────────────────────────────────
 
     /** Un archivo oculto comienza con punto. */
     public boolean esOculto() {
@@ -70,8 +96,6 @@ public class Archivo {
         return !esOculto()
                 && ValidadorEntrada.esNombreArchivoValido(nombre);
     }
-
-    // ─── Etiquetas y palabras clave ─────────────────────────────────────────────
 
     /** Añade una etiqueta (si pasa validación y no existe). */
     public void agregarEtiqueta(Etiqueta etiqueta) {
@@ -215,8 +239,8 @@ public class Archivo {
         return fechaModificacion;
     }
 
-    public List<Etiqueta> getEtiquetas() {
-        return Collections.unmodifiableList(etiquetas);
+    public Set<Etiqueta> getEtiquetas() {
+        return Collections.unmodifiableSet(etiquetas);
     }
 
     public Set<String> getPalabrasClave() {

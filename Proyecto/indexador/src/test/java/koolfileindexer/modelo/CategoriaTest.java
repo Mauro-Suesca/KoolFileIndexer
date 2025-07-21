@@ -17,9 +17,9 @@ class CategoriaTest {
     }
 
     @Test
-    void extensionDesconocidaDevuelveSinCategoria() {
-        Archivo raro = new Archivo("foo.xyz", "/any/foo.xyz", "xyz", 0,
+    void extensionDesconocidaDevuelveOtro() {
+        Archivo desconocido = new Archivo("foo.xyz", "/tmp/foo.xyz", "xyz", 0,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
-        assertEquals(Categoria.SIN_CATEGORIA, Categoria.clasificar(raro));
+        assertEquals(Categoria.OTRO, Categoria.clasificar(desconocido));
     }
 }

@@ -3,12 +3,14 @@ package koolfileindexer.logica;
 import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
+import koolfileindexer.logica.ArchivoConverter; // Añadir esta importación
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -17,7 +19,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import koolfileindexer.db.ArchivoBD;
 
 /**
  * Indexador recorre carpetas por lotes, aplica exclusiones
@@ -102,6 +103,7 @@ public class Indexador {
     private boolean excluirArchivo(Path p) {
         Path norm = p.toAbsolutePath().normalize();
 
+        // Exclusiones personalizadas del archivo
         for (Path excl : rutasExcluidas) {
             if (norm.startsWith(excl)) {
                 return true;
@@ -109,26 +111,39 @@ public class Indexador {
         }
 
         String nombre = norm.getFileName().toString().toLowerCase();
+        String rutaMin = norm.toString().toLowerCase();
 
+        // Archivos ocultos
         try {
             if (Files.isHidden(norm))
                 return true;
         } catch (IOException ignored) {
         }
 
+        // Archivos que empiezan con punto
         if (nombre.startsWith("."))
             return true;
 
+        // Extensiones prohibidas
         int idx = nombre.lastIndexOf('.');
         if (idx >= 0 && EXT_PROHIBIDAS.contains(nombre.substring(idx + 1))) {
             return true;
         }
 
-        String rutaMin = norm.toString().toLowerCase();
-        for (String pat : PATRONES_PROTEGIDOS) {
-            if (rutaMin.contains(File.separator + pat)) {
-                return true;
-            }
+        // Rutas del sistema (Windows, Program Files, etc.)
+        if (rutaMin.contains("\\windows\\") || rutaMin.contains("/windows/")) {
+            return true;
+        }
+        if (rutaMin.contains("\\program files\\") || rutaMin.contains("/program files/")) {
+            return true;
+        }
+        if (rutaMin.contains("\\archivos de programa\\") || rutaMin.contains("/archivos de programa/")) {
+            return true;
+        }
+
+        // Archivos específicos a excluir
+        if (nombre.equals("thumbs.db")) {
+            return true;
         }
 
         return false;
@@ -193,13 +208,8 @@ public class Indexador {
         Archivo archivoModelo = crearArchivoDesdePath(p, attrs);
 
         try {
-            ArchivoBD filtroBD = new ArchivoBD();
-            filtroBD.setNombre(archivoModelo.getNombre());
-            filtroBD.setTamanoBytes(attrs.size());
-            filtroBD.setFechaCreacion(
-                    LocalDateTime.ofInstant(attrs.creationTime().toInstant(), ZoneId.systemDefault()));
-            filtroBD.setRutaCompleta(archivoModelo.getRutaCompleta());
-            filtroBD.setExtension(archivoModelo.getExtension());
+            // Usar Archivo de db en lugar de ArchivoBD
+            koolfileindexer.db.Archivo filtroBD = ArchivoConverter.toDbArchivo(archivoModelo);
 
             // Buscar en BD y manejar resultado
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
@@ -238,35 +248,27 @@ public class Indexador {
         archivoModelo.actualizarFechaModificacion(
                 LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault()));
 
-        // Preparar datos para actualización
-        ArchivoBD archivoBD = new ArchivoBD();
-        archivoBD.setNombre(archivoModelo.getNombre());
-        archivoBD.setTamanoBytes(archivoModelo.getTamanoBytes());
-        archivoBD.setFechaCreacion(archivoModelo.getFechaCreacion());
-        archivoBD.setRutaCompleta(archivoModelo.getRutaCompleta());
-        archivoBD.setExtension(archivoModelo.getExtension());
-        archivoBD.setCategoria(
-                archivoModelo.getCategoria() != null ? archivoModelo.getCategoria().getNombre() : null);
-
-        connector.actualizarTamanoFechaModificacionArchivo(archivoBD);
-        connector.actualizarCategoriaArchivo(archivoBD);
-        System.out.println("[ACTUALIZADO] " + archivoModelo.getRutaCompleta());
+        try {
+            // Usar Archivo de db en lugar de ArchivoBD
+            koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
+            connector.actualizarTamanoFechaModificacionArchivo(archivoDb);
+            connector.actualizarCategoriaArchivo(archivoDb);
+            System.out.println("[ACTUALIZADO] " + archivoModelo.getRutaCompleta());
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar archivo: " + e.getMessage());
+        }
     }
 
     private void insertarNuevoArchivo(Archivo archivoModelo, BasicFileAttributes attrs) throws Exception {
-        ArchivoBD archivoBD = new ArchivoBD();
-        archivoBD.setNombre(archivoModelo.getNombre());
-        archivoBD.setTamanoBytes(archivoModelo.getTamanoBytes());
-        archivoBD.setFechaCreacion(archivoModelo.getFechaCreacion());
-        archivoBD.setRutaCompleta(archivoModelo.getRutaCompleta());
-        archivoBD.setExtension(archivoModelo.getExtension());
-        archivoBD.setCategoria(
-                archivoModelo.getCategoria() != null ? archivoModelo.getCategoria().getNombre() : null);
+        try {
+            // Usar Archivo de db en lugar de ArchivoBD
+            koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
+            connector.crearArchivo(archivoDb);
+            System.out.println("[INSERTADO]  " + archivoModelo.getRutaCompleta());
 
-        if (connector.crearArchivo(archivoBD)) {
-            // Obtener ID del nuevo archivo
+            // Buscar usando el mismo archivoDb para la consulta
             ResultSet nuevoRs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
-                    archivoBD, archivoModelo.getTamanoBytes(), archivoModelo.getTamanoBytes());
+                    archivoDb, archivoModelo.getTamanoBytes(), archivoModelo.getTamanoBytes());
             if (nuevoRs != null) {
                 try (nuevoRs) {
                     if (nuevoRs.next()) {
@@ -274,7 +276,8 @@ public class Indexador {
                     }
                 }
             }
-            System.out.println("[INSERTADO]  " + archivoModelo.getRutaCompleta());
+        } catch (SQLException e) {
+            System.err.println("Error al insertar archivo: " + e.getMessage());
         }
     }
 

@@ -24,7 +24,7 @@ public class MainIndexadorCLI {
             verificarConexionBD();
 
             // 1) Instancia del indexador con archivo de exclusiones
-            idx = Indexador.getInstance("exclusiones.txt"); // Ya no pasamos connection
+            idx = Indexador.getInstance("exclusiones.txt");
             mostrarConfiguracion(idx);
 
             // 2) Selección de raíces según el modo
@@ -51,7 +51,8 @@ public class MainIndexadorCLI {
                 idx.shutdown();
             }
             if (connector != null) {
-                connector.shutdown();
+                // Usar terminarConexion() en lugar de shutdown()
+                connector.terminarConexion();
             }
         }
     }

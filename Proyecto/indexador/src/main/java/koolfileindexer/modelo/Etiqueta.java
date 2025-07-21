@@ -7,10 +7,24 @@ import java.util.Objects;
  * Instancias con mismo texto (insensible a mayúsculas) son iguales.
  */
 public class Etiqueta {
-    private String nombre;
+    private final String nombre;
 
     private Etiqueta(String nombre) {
-        this.nombre = nombre;
+        if (nombre == null) {
+            throw new IllegalArgumentException("nombre no puede ser null");
+        }
+        String normalizado = nombre.trim().toLowerCase();
+        if (normalizado.isEmpty()) {
+            throw new IllegalArgumentException("nombre no puede estar vacío");
+        }
+        if (!esNombreValido(normalizado)) {
+            throw new IllegalArgumentException("nombre contiene caracteres inválidos");
+        }
+        this.nombre = normalizado;
+    }
+
+    private static boolean esNombreValido(String nombre) {
+        return nombre.matches("[a-z0-9_-]+");
     }
 
     /**
@@ -22,17 +36,7 @@ public class Etiqueta {
      * @throws IllegalArgumentException si el nombre no cumple las reglas.
      */
     public static Etiqueta crear(String nombre) {
-        return new Etiqueta(validarYNormalizar(nombre, "Etiqueta"));
-    }
-
-    /**
-     * Renombra esta etiqueta.
-     *
-     * @param nuevoNombre mismo formato y reglas que crear().
-     * @throws IllegalArgumentException si el nuevo nombre no cumple las reglas.
-     */
-    public void setNombre(String nuevoNombre) {
-        this.nombre = validarYNormalizar(nuevoNombre, "Nuevo nombre de etiqueta");
+        return new Etiqueta(nombre);
     }
 
     public String getNombre() {
@@ -56,27 +60,5 @@ public class Etiqueta {
     @Override
     public String toString() {
         return nombre;
-    }
-
-    // ───────────────────────────────────────────────────
-    // Helpers privados
-
-    /**
-     * Valida y normaliza un texto según las reglas de etiquetas.
-     *
-     * @param input    texto original
-     * @param contexto descripción para mensajes de error
-     * @return texto normalizado (trim + toLowerCase)
-     * @throws NullPointerException     si input es null
-     * @throws IllegalArgumentException si input no cumple el patrón
-     */
-    private static String validarYNormalizar(String input, String contexto) {
-        Objects.requireNonNull(input, contexto + " no puede ser null");
-        String limpio = input.trim();
-        if (!ValidadorEntrada.esEtiquetaValida(limpio)) {
-            throw new IllegalArgumentException(
-                    String.format("%s inválido: '%s'", contexto, limpio));
-        }
-        return limpio.toLowerCase();
     }
 }
