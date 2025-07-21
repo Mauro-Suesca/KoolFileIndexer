@@ -8,6 +8,7 @@ plugins {
     application
     id("buildlogic.java-application-conventions")
     id("org.openjfx.javafxplugin") version "0.1.0"
+    id("org.beryx.jlink") version "3.1.1"
 }
 
 repositories {
@@ -16,19 +17,69 @@ repositories {
 
 javafx {
     version = "21"
-    modules("javafx.controls", "javafx.fxml")
+    modules("javafx.base", "javafx.controls", "javafx.fxml")
 }
 
 dependencies {
+    implementation(project(":common"))
     implementation("org.apache.commons:commons-text")
     implementation("org.postgresql:postgresql:42.7.7")
+    implementation("org.openjfx:javafx-controls:21")
+    implementation("org.openjfx:javafx-fxml:21")
+    implementation("org.openjfx:javafx-base:21")
+    implementation("org.openjfx:javafx-graphics:21")
+    testImplementation("junit:junit:4.13.2")
 }
 
 application {
     // Define the main class for the application.
     mainClass = "koolfileindexer.App"
+    mainModule = "app"
     applicationDefaultJvmArgs =
         listOf(
             "--add-modules=javafx.controls,javafx.fxml",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+            "--add-opens=javafx.controls/com.sun.javafx.scene.control.skin=ALL-UNNAMED",
+            "--add-opens=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED",
+            "--add-opens=javafx.base/com.sun.javafx.runtime=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.scene.traversal=ALL-UNNAMED"
         )
+}
+
+jlink {
+    options.addAll(listOf(
+        "--strip-debug",
+        "--compress", "2",
+        "--no-header-files",
+        "--no-man-pages"
+    ))
+    addExtraDependencies("javafx")
+    launcher {
+        name = "KoolFileIndexer"
+    }
+    jpackage {
+        imageName = "KoolFileIndexer"
+        appVersion = "1.0.0"
+        vendor = "Equipo A"
+        description = "KoolFileIndexer - Indexador de archivos multiplataforma."
+        skipInstaller = true
+        jvmArgs = listOf(
+            "--add-modules=javafx.controls,javafx.fxml",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+            "--add-opens=javafx.controls/com.sun.javafx.scene.control.skin=ALL-UNNAMED",
+            "--add-opens=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED",
+            "--add-opens=javafx.base/com.sun.javafx.runtime=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED",
+            "--add-opens=javafx.graphics/com.sun.javafx.scene.traversal=ALL-UNNAMED"
+        )
+    }
 }

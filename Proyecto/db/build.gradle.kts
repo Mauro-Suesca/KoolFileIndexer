@@ -1,7 +1,6 @@
-// Proyecto/indexador/build.gradle.kts
-
-import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.testing.Test
+/*
+ * Modulo db
+ */
 
 plugins {
     application
@@ -14,8 +13,6 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":db"))
     implementation("org.apache.commons:commons-text")
     implementation("org.postgresql:postgresql:42.7.7")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -26,7 +23,7 @@ dependencies {
 
 application {
     // Define la clase principal de la aplicación.
-    mainClass = "koolfileindexer.logica.MainIndexadorCLI"
+    mainClass = "koolfileindexer.Indexador"
 }
 
 tasks.withType<Test> {

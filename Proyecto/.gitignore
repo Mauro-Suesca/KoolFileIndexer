@@ -4,7 +4,14 @@
 # Ignore Gradle build output directory
 build
 bin
+dist
 
 # IDE-specific settings
 .settings/
 **/.settings/
+.vscode/
+**/.vscode/
+.project
+**/.project
+.classpath
+**/.classpath
