@@ -8,10 +8,10 @@ set "DB_HOST=localhost"
 set "DB_PORT=5432"
 set "DB_USER=kool_user"
 set "DB_PASS=koolpass"
-set "SQL_SETUP=app\src\main\resources\db\migration\setup_dev.sql"
-set "SQL_CREATE=app\src\main\resources\db\migration\create_db.sql"
-set "SQL_INIT=app\src\main\resources\db\migration\init_schema.sql"
-set "SQL_FUNCTIONS=app\src\main\resources\db\functions\function_initialization.sql"
+set "SQL_SETUP=db\src\main\resources\db\migration\setup_dev.sql"
+set "SQL_CREATE=db\src\main\resources\db\migration\create_db.sql"
+set "SQL_INIT=db\src\main\resources\db\migration\init_schema.sql"
+set "SQL_FUNCTIONS=db\src\main\resources\db\functions\function_initialization.sql"
 
 echo ================================
 echo 🛠 Inicializando entorno de desarrollo (Windows)
