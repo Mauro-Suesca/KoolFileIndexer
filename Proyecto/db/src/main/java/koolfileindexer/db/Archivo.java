@@ -2,6 +2,7 @@ package koolfileindexer.db;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,10 +51,14 @@ public class Archivo {
     }
 
     public List<Etiqueta> getEtiquetas() {
-        return Collections.unmodifiableList(etiquetas);
+        return etiquetas != null ? Collections.unmodifiableList(etiquetas) : etiquetas;
     }
 
     public Set<String> getPalabrasClave() {
-        return Collections.unmodifiableSet(palabrasClave);
+        return palabrasClave != null ? Collections.unmodifiableSet(palabrasClave) : palabrasClave;
+    }
+
+    public void setPalabrasClave(Set<String> palabrasClave) {
+        this.palabrasClave = palabrasClave != null ? palabrasClave : new HashSet<>();
     }
 }

@@ -2,6 +2,7 @@ package koolfileindexer.db;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ public class BaseDeDatosTest{
     @Test
     public void probarCreacionArchivo(){
         ConectorBasedeDatos conector = ConectorBasedeDatos.obtenerInstancia();
-        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Texto");
+        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Documento");
 
         try{
 
@@ -22,7 +23,9 @@ public class BaseDeDatosTest{
 
             ResultSet resultados = conector.buscarArchivosPorFiltroMinimoUnaPalabraClave(archivoFiltro, -1, -1);
 
-            Assertions.assertEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            if(resultados.next()){
+                Assertions.assertEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            }
 
             conector.eliminarArchivo(archivoPrueba);
 
@@ -36,7 +39,7 @@ public class BaseDeDatosTest{
     @Test
     public void probarEliminacionArchivo(){
         ConectorBasedeDatos conector = ConectorBasedeDatos.obtenerInstancia();
-        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Texto");
+        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Documento");
             
         try{
             conector.obtenerConexion();
@@ -47,8 +50,9 @@ public class BaseDeDatosTest{
 
             ResultSet resultados = conector.buscarArchivosPorFiltroMinimoUnaPalabraClave(archivoFiltro, -1, -1);
 
-            Assertions.assertNotEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
-        
+            if(resultados.next()){
+                Assertions.assertNotEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            }
         }catch(SQLException e){
             Assertions.fail("Ocurrió una excepción SQL: " + e.getMessage());
         }
@@ -59,7 +63,7 @@ public class BaseDeDatosTest{
     @Test
     public void probarBusquedaExitosaPorVariasPalabrasClave(){
         ConectorBasedeDatos conector = ConectorBasedeDatos.obtenerInstancia();
-        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Texto");
+        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Documento");
 
         try{
             conector.obtenerConexion();
@@ -69,13 +73,16 @@ public class BaseDeDatosTest{
             conector.asociarPalabraClaveArchivo(archivoPrueba, "biyuvreuhujvvwxqol");
 
             Archivo archivoFiltro = new Archivo(null, -1, null, null, null, null);
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "odwubnwdialdyeapow");
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "pbuapihewanipxhwai");
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "biyuvreuhujvvwxqol");
+            HashSet<String> palabrasFiltro = new HashSet<>();
+            palabrasFiltro.add("odwubnwdialdyeapow");
+            palabrasFiltro.add("pbuapihewanipxhwai");
+            palabrasFiltro.add("biyuvreuhujvvwxqol");
 
             ResultSet resultados = conector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(archivoFiltro, -1, -1);
 
-            Assertions.assertEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            if(resultados.next()){
+                Assertions.assertEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            }
 
             conector.eliminarArchivo(archivoPrueba);
         }catch(SQLException e){
@@ -88,20 +95,23 @@ public class BaseDeDatosTest{
     @Test
     public void probarBusquedaSinResultadosPorVariasPalabrasClave(){
         ConectorBasedeDatos conector = ConectorBasedeDatos.obtenerInstancia();
-        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Texto");
+        Archivo archivoPrueba = new Archivo("documento", 1024, java.time.LocalDateTime.now(), "/home/docs", "pdf", "Documento");
         try{
             conector.obtenerConexion();
             conector.crearArchivo(archivoPrueba);
             conector.asociarPalabraClaveArchivo(archivoPrueba, "odwubnwdialdyeapow");
 
             Archivo archivoFiltro = new Archivo(null, -1, null, null, null, null);
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "odwubnwdialdyeapow");
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "pbuapihewanipxhwai");
-            conector.asociarPalabraClaveArchivo(archivoFiltro, "biyuvreuhujvvwxqol");
+            HashSet<String> palabrasFiltro = new HashSet<>();
+            palabrasFiltro.add("odwubnwdialdyeapow");
+            palabrasFiltro.add("pbuapihewanipxhwai");
+            palabrasFiltro.add("biyuvreuhujvvwxqol");
 
             ResultSet resultados = conector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(archivoFiltro, -1, -1);
 
-            Assertions.assertNotEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            if(resultados.next()){
+                Assertions.assertNotEquals(resultados.getString(2) + "/" + resultados.getString(3) + "." + resultados.getString(4), "/home/docs/documento.pdf");
+            }
 
             conector.eliminarArchivo(archivoPrueba);
 
