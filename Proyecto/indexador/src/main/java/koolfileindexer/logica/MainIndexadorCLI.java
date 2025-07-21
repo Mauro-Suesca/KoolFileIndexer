@@ -119,14 +119,23 @@ public class MainIndexadorCLI {
     }
 
     private static void esperarComandoSalida() {
-        try (Scanner scanner = new Scanner(System.in)) {
-            while (true) {
-                String comando = scanner.nextLine().trim().toLowerCase();
-                if (comando.equals("q")) {
-                    System.out.println("\nDeteniendo servicios...");
-                    break;
-                }
-            }
+        System.out.println("Servicio iniciado. Presiona Ctrl+C para terminar.");
+
+        // Agregar un gancho de apagado para limpiar recursos al terminar
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Apagando servicios...");
+            // El código de limpieza ya está en el bloque finally del método main
+        }));
+
+        // Mantener el programa en ejecución sin esperar entrada interactiva
+        try {
+            // Esperar por un tiempo específico (30 minutos) o hasta que el programa sea
+            // terminado
+            Thread.sleep(30 * 60 * 1000); // 30 minutos en milisegundos
+            System.out.println("Tiempo máximo de ejecución alcanzado. Terminando servicios...");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Ejecución interrumpida.");
         }
     }
 }
