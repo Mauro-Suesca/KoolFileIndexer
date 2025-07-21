@@ -49,4 +49,20 @@ class ArchivoTest {
         a.asociarPalabraClaveManual("Clave1");
         assertEquals(1, a.getPalabrasClave().size());
     }
+
+    @Test
+    void constructor_validaParametrosObligatorios() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Archivo(null, "/path", "txt", 0, LocalDateTime.now(), LocalDateTime.now()));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Archivo("file.txt", null, "txt", 0, LocalDateTime.now(), LocalDateTime.now()));
+    }
+
+    @Test
+    void setId_validaIdPositivo() {
+        Archivo a = new Archivo("f.txt", "/tmp/f.txt", "txt", 100, LocalDateTime.now(), LocalDateTime.now());
+        assertThrows(IllegalArgumentException.class, () -> a.setId(-1L));
+        assertThrows(IllegalArgumentException.class, () -> a.setId(0L));
+    }
 }
