@@ -269,11 +269,14 @@ public class Indexador implements Runnable {
     // Añadir este método para detectar cambios en archivos
     private void detectarCambiosArchivo(Path nuevaRuta, BasicFileAttributes attrs, ResultSet rs) throws SQLException {
         try {
-            // Obtener información actual del archivo en la BD
-            String nombreActualEnBD = rs.getString("arc_nombre");
-            String rutaActualEnBD = rs.getString("arc_ruta_completa");
+            // Usar el enfoque de alternativas para obtener nombres de columnas
+            String nombreActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
+                    new String[] { "arc_nombre", "nombre", "name" });
 
-            // Información del archivo en el sistema de archivos
+            String rutaActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
+                    new String[] { "arc_ruta_completa", "ruta_completa", "path" });
+
+            // El resto del método sigue igual
             String nuevoNombre = nuevaRuta.getFileName().toString();
             String nuevaRutaCompleta = nuevaRuta.toAbsolutePath().normalize().toString();
 

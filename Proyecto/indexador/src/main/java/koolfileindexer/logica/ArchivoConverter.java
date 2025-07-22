@@ -62,7 +62,7 @@ public class ArchivoConverter {
 
     // Métodos auxiliares para manejar nombres de columna alternativos
 
-    private static String getStringWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
+    public static String getStringWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
         for (String colName : columnNames) {
             try {
                 return rs.getString(colName);
@@ -70,7 +70,6 @@ public class ArchivoConverter {
                 // Intentar con el siguiente nombre
             }
         }
-        // Si llegamos aquí, ningún nombre alternativo funcionó
         throw new SQLException(
                 "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
     }
