@@ -46,7 +46,28 @@ public class Indexador implements Runnable {
         this.raicesAIndexar = raices;
         this.tamanoLote = tamanoLote;
         this.intervaloEjecucion = intervalo;
-        cargarExclusiones(archivoExclusiones);
+
+        // Intentar primero con el archivo pasado como parámetro
+        if (archivoExclusiones != null && !archivoExclusiones.isBlank()) {
+            cargarExclusiones(archivoExclusiones);
+        }
+
+        // Si no se cargaron exclusiones, intentar con el archivo en $HOME/.config
+        if (rutasExcluidas.isEmpty()) {
+            String userHome = System.getProperty("user.home");
+            Path configPath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt");
+            if (Files.exists(configPath)) {
+                cargarExclusiones(configPath.toString());
+            } else {
+                // Crear directorios si no existen
+                try {
+                    Files.createDirectories(configPath.getParent());
+                    System.out.println("[CONFIG] Creado directorio de configuración en: " + configPath.getParent());
+                } catch (IOException e) {
+                    System.err.println("Error creando directorio de configuración: " + e.getMessage());
+                }
+            }
+        }
     }
 
     // Método de fábrica modificado
@@ -100,7 +121,11 @@ public class Indexador implements Runnable {
         }, 0, intervalo.toMinutes(), TimeUnit.MINUTES);
     }
 
-    private void cargarExclusiones(String archivoExclusiones) {
+    /**
+     * Carga las exclusiones desde un archivo de texto.
+     * Cada línea representa una ruta a excluir.
+     */
+    public void cargarExclusiones(String archivoExclusiones) {
         if (archivoExclusiones == null || archivoExclusiones.isBlank())
             return;
         Path path = Paths.get(archivoExclusiones);
@@ -108,6 +133,9 @@ public class Indexador implements Runnable {
             return;
 
         try {
+            // Limpiar exclusiones anteriores
+            rutasExcluidas.clear();
+
             Files.readAllLines(path).stream()
                     .map(String::trim)
                     .filter(s -> !s.isEmpty() && !s.startsWith("#"))
@@ -115,6 +143,8 @@ public class Indexador implements Runnable {
                     .map(Path::toAbsolutePath)
                     .map(Path::normalize)
                     .forEach(rutasExcluidas::add);
+
+            System.out.println("[CONFIG] Cargadas " + rutasExcluidas.size() + " exclusiones de " + path);
         } catch (IOException e) {
             System.err.println("Error leyendo exclusiones: " + e.getMessage());
         }

@@ -192,6 +192,54 @@ public class MainIndexadorCLI {
                 return Response.err(new ErrorMessage("Error al eliminar palabra clave: " + e.getMessage()));
             }
         });
+
+        // Registrar acción para recargar exclusiones
+        server.registerAction("reloadExclusions", (Request req) -> {
+            try {
+                String rawData = req.getRawData();
+                String[] lines = rawData.split("\r\n");
+
+                // Si se proporciona una ruta específica
+                String filePath = null;
+                if (lines.length > 0 && lines[0].startsWith("path: ")) {
+                    filePath = lines[0].split(": ")[1];
+                }
+
+                // Si no se proporciona ruta, usar la ubicación predeterminada en $HOME
+                if (filePath == null || filePath.isEmpty()) {
+                    String userHome = System.getProperty("user.home");
+                    filePath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt").toString();
+                }
+
+                // Recargar exclusiones
+                indexador.cargarExclusiones(filePath);
+
+                return Response.ok("Exclusiones recargadas correctamente desde: " + filePath);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Response.err(new ErrorMessage("Error al recargar exclusiones: " + e.getMessage()));
+            }
+        });
+
+        // Registrar acción para listar exclusiones actuales
+        server.registerAction("getExclusions", (Request req) -> {
+            try {
+                Set<Path> exclusiones = indexador.getRutasExcluidas();
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("Exclusiones actuales:\n");
+
+                int i = 1;
+                for (Path exclusion : exclusiones) {
+                    sb.append(i++).append(". ").append(exclusion).append("\n");
+                }
+
+                return Response.ok(sb.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Response.err(new ErrorMessage("Error al obtener exclusiones: " + e.getMessage()));
+            }
+        });
     }
 
     // Métodos auxiliares para la API
@@ -204,8 +252,34 @@ public class MainIndexadorCLI {
             // Crear un objeto Archivo como filtro
             koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
 
-            // Si hay palabras clave, agregarlas al filtro
+            // Si hay palabras clave, intentar usarlas primero como nombre
             if (keywords != null && keywords.length > 0) {
+                // Usar la primera palabra clave como nombre para búsqueda
+                filtro.setNombre(keywords[0]);
+
+                ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+                // Si encontramos resultados por nombre, los devolvemos
+                if (rs != null) {
+                    boolean hayResultados = false;
+                    try (rs) {
+                        while (rs.next()) {
+                            Archivo archivo = ArchivoConverter.fromResultSet(rs);
+                            resultados.add(archivo);
+                            hayResultados = true;
+                        }
+                    }
+
+                    // Si encontramos resultados por nombre, no necesitamos buscar por palabras
+                    // clave
+                    if (hayResultados) {
+                        return resultados;
+                    }
+                }
+
+                // Si no encontramos por nombre, intentamos con palabras clave
+                filtro = new koolfileindexer.db.Archivo(); // Reiniciar el filtro
+                filtro.setNombre(null);
                 Set<String> palabrasClave = new HashSet<>(Arrays.asList(keywords));
                 filtro.setPalabrasClave(palabrasClave);
             }
