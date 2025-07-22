@@ -11,7 +11,7 @@ import java.util.Set;
  */
 public class Archivo {
     // Usamos el nombre completo en lugar de "as"
-    private final koolfileindexer.modelo.Archivo modelo;
+    private koolfileindexer.modelo.Archivo modelo;
 
     public Archivo(String nombre, long tamanoBytes, LocalDateTime fechaModificacion,
             String rutaCompleta, String extension, String categoria) {
@@ -36,22 +36,24 @@ public class Archivo {
         }
     }
 
-    // Constructor por defecto si se requiere
+    // Constructor por defecto modificado para filtros
     public Archivo() {
-        // Inicialización mínima
         this.modelo = new koolfileindexer.modelo.Archivo(
-                "temp", // nombre
-                "/temp", // rutaCompleta
-                "tmp", // extensión
-                0, // tamaño
-                LocalDateTime.now(), // fecha creación
-                LocalDateTime.now() // fecha modificación
+                "", // nombre - cadena vacía en lugar de null
+                "", // rutaCompleta - cadena vacía en lugar de null
+                "", // extensión - cadena vacía en lugar de null
+                0, // tamaño (se mantiene 0 ya que es primitivo)
+                LocalDateTime.now(), // fecha creación (se mantiene)
+                LocalDateTime.now() // fecha modificación (se mantiene)
         );
+
+        // No asignamos categoría para que no filtre por categoría
     }
 
     // Getters para ConectorBaseDatos
     public String getNombre() {
-        return modelo.getNombre();
+        String nombre = modelo.getNombre();
+        return nombre.isEmpty() ? null : nombre;
     }
 
     public long getTamanoBytes() {
@@ -63,11 +65,13 @@ public class Archivo {
     }
 
     public String getRutaCompleta() {
-        return modelo.getRutaCompleta();
+        String ruta = modelo.getRutaCompleta();
+        return ruta.isEmpty() ? null : ruta;
     }
 
     public String getExtension() {
-        return modelo.getExtension();
+        String ext = modelo.getExtension();
+        return ext.isEmpty() ? null : ext;
     }
 
     public Categoria getCategoria() {
@@ -114,26 +118,138 @@ public class Archivo {
     }
 
     public void setNombre(String nombre) {
-        // Como 'nombre' es final en modelo.Archivo, tendríamos que crear un nuevo
-        // modelo
-        // Este es un hack - lo ideal sería refactorizar para evitar la necesidad de
-        // estos setters
+        if (this.modelo != null) {
+            // Creamos un nuevo modelo copiando los valores existentes pero con el nuevo
+            // nombre
+            koolfileindexer.modelo.Archivo nuevoModelo = new koolfileindexer.modelo.Archivo(
+                    nombre,
+                    this.modelo.getRutaCompleta(),
+                    this.modelo.getExtension(),
+                    this.modelo.getTamanoBytes(),
+                    this.modelo.getFechaCreacion(),
+                    this.modelo.getFechaModificacion());
+
+            // Copiamos otros datos importantes
+            if (this.modelo.getCategoria() != null) {
+                nuevoModelo.asignarCategoria(this.modelo.getCategoria());
+            }
+
+            // Copiamos palabras clave
+            for (String palabraClave : this.modelo.getPalabrasClave()) {
+                nuevoModelo.agregarPalabraClave(palabraClave);
+            }
+
+            // Reemplazamos el modelo
+            this.modelo = nuevoModelo;
+        }
     }
 
     public void setRutaCompleta(String rutaCompleta) {
-        // Similar al anterior
+        if (this.modelo != null) {
+            // Creamos un nuevo modelo copiando los valores existentes pero con la nueva
+            // ruta
+            koolfileindexer.modelo.Archivo nuevoModelo = new koolfileindexer.modelo.Archivo(
+                    this.modelo.getNombre(),
+                    rutaCompleta,
+                    this.modelo.getExtension(),
+                    this.modelo.getTamanoBytes(),
+                    this.modelo.getFechaCreacion(),
+                    this.modelo.getFechaModificacion());
+
+            // Copiamos otros datos importantes
+            if (this.modelo.getCategoria() != null) {
+                nuevoModelo.asignarCategoria(this.modelo.getCategoria());
+            }
+
+            // Copiamos palabras clave
+            for (String palabraClave : this.modelo.getPalabrasClave()) {
+                nuevoModelo.agregarPalabraClave(palabraClave);
+            }
+
+            // Reemplazamos el modelo
+            this.modelo = nuevoModelo;
+        }
     }
 
     public void setExtension(String extension) {
-        // Similar al anterior
+        if (this.modelo != null) {
+            // Creamos un nuevo modelo copiando los valores existentes pero con la nueva
+            // extensión
+            koolfileindexer.modelo.Archivo nuevoModelo = new koolfileindexer.modelo.Archivo(
+                    this.modelo.getNombre(),
+                    this.modelo.getRutaCompleta(),
+                    extension,
+                    this.modelo.getTamanoBytes(),
+                    this.modelo.getFechaCreacion(),
+                    this.modelo.getFechaModificacion());
+
+            // Copiamos otros datos importantes
+            if (this.modelo.getCategoria() != null) {
+                nuevoModelo.asignarCategoria(this.modelo.getCategoria());
+            }
+
+            // Copiamos palabras clave
+            for (String palabraClave : this.modelo.getPalabrasClave()) {
+                nuevoModelo.agregarPalabraClave(palabraClave);
+            }
+
+            // Reemplazamos el modelo
+            this.modelo = nuevoModelo;
+        }
     }
 
     public void setTamanoBytes(long tamanoBytes) {
-        // Similar al anterior
+        if (this.modelo != null) {
+            // Creamos un nuevo modelo copiando los valores existentes pero con el nuevo
+            // tamaño
+            koolfileindexer.modelo.Archivo nuevoModelo = new koolfileindexer.modelo.Archivo(
+                    this.modelo.getNombre(),
+                    this.modelo.getRutaCompleta(),
+                    this.modelo.getExtension(),
+                    tamanoBytes,
+                    this.modelo.getFechaCreacion(),
+                    this.modelo.getFechaModificacion());
+
+            // Copiamos otros datos importantes
+            if (this.modelo.getCategoria() != null) {
+                nuevoModelo.asignarCategoria(this.modelo.getCategoria());
+            }
+
+            // Copiamos palabras clave
+            for (String palabraClave : this.modelo.getPalabrasClave()) {
+                nuevoModelo.agregarPalabraClave(palabraClave);
+            }
+
+            // Reemplazamos el modelo
+            this.modelo = nuevoModelo;
+        }
     }
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        // Similar al anterior
+        if (this.modelo != null) {
+            // Creamos un nuevo modelo copiando los valores existentes pero con la nueva
+            // fecha
+            koolfileindexer.modelo.Archivo nuevoModelo = new koolfileindexer.modelo.Archivo(
+                    this.modelo.getNombre(),
+                    this.modelo.getRutaCompleta(),
+                    this.modelo.getExtension(),
+                    this.modelo.getTamanoBytes(),
+                    fechaCreacion,
+                    this.modelo.getFechaModificacion());
+
+            // Copiamos otros datos importantes
+            if (this.modelo.getCategoria() != null) {
+                nuevoModelo.asignarCategoria(this.modelo.getCategoria());
+            }
+
+            // Copiamos palabras clave
+            for (String palabraClave : this.modelo.getPalabrasClave()) {
+                nuevoModelo.agregarPalabraClave(palabraClave);
+            }
+
+            // Reemplazamos el modelo
+            this.modelo = nuevoModelo;
+        }
     }
 
     public void setFechaModificacion(LocalDateTime fechaModificacion) {
