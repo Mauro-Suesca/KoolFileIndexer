@@ -46,7 +46,9 @@ public class MainIndexadorCLI {
             List<Path> rootsToScan = seleccionarRaices(args);
 
             // 2) Crear el indexador (ahora sin iniciar)
-            indexador = Indexador.getInstance("exclusiones.txt", rootsToScan, DEFAULT_BATCH, DEFAULT_INTERVAL);
+            indexador = Indexador.getInstance(
+                    Paths.get("src", "main", "resources", "indexador", "exclusiones.txt").toString(),
+                    rootsToScan, DEFAULT_BATCH, DEFAULT_INTERVAL);
             mostrarConfiguracion(indexador);
 
             // 3) Iniciar el servidor de sockets
@@ -101,12 +103,29 @@ public class MainIndexadorCLI {
                 Search search = req.build(Search.stringFactory());
                 String[] keywords = search.getKeywords();
                 String[] tagNames = search.getTags();
+                String[] filters = search.getFilters(); // Obtener los filtros
+
+                // Procesar filtros para búsqueda por nombre
+                if (filters != null && filters.length > 0) {
+                    for (String filter : filters) {
+                        if (filter.startsWith("name:") || filter.startsWith("nombre:")) {
+                            // Reemplazar las keywords con el nombre a buscar
+                            String nombreBusqueda = filter.substring(filter.indexOf(":") + 1).trim();
+                            keywords = new String[] { nombreBusqueda };
+                            System.out.println("Búsqueda por nombre: " + nombreBusqueda);
+                            break;
+                        }
+                    }
+                }
 
                 System.out.println("Búsqueda recibida - Keywords: " +
                         String.join(", ", keywords) + " - Tags: " +
-                        (tagNames != null && tagNames.length > 0 ? String.join(", ", tagNames) : "ninguna"));
+                        (tagNames != null && tagNames.length > 0 ? String.join(", ", tagNames) : "ninguna") +
+                        " - Filtros: "
+                        + (filters != null && filters.length > 0 ? String.join(", ", filters) : "ninguno"));
 
-                // Realizar búsqueda usando el conector de BD
+                // El método buscarArchivos ya está implementado para usar la primera keyword
+                // como nombre
                 List<Archivo> resultados = buscarArchivos(keywords, tagNames);
                 GenericList<File> listaArchivos = convertirArchivos(resultados);
 

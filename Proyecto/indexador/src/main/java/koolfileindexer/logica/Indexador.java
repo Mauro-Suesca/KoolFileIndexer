@@ -47,26 +47,38 @@ public class Indexador implements Runnable {
         this.tamanoLote = tamanoLote;
         this.intervaloEjecucion = intervalo;
 
-        // Intentar primero con el archivo pasado como parámetro
-        if (archivoExclusiones != null && !archivoExclusiones.isBlank()) {
-            cargarExclusiones(archivoExclusiones);
+        // Primero intentar con el archivo en $HOME/.config
+        String userHome = System.getProperty("user.home");
+        Path configPath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt");
+
+        if (Files.exists(configPath)) {
+            cargarExclusiones(configPath.toString());
+            System.out.println("[CONFIG] Cargadas exclusiones del usuario desde: " + configPath);
+        } else {
+            // Crear directorios y archivo si no existen
+            try {
+                Files.createDirectories(configPath.getParent());
+                System.out.println("[CONFIG] Creado directorio de configuración en: " + configPath.getParent());
+
+                // Si hay un archivo de exclusiones del proyecto, copiarlo al directorio del
+                // usuario
+                if (archivoExclusiones != null && !archivoExclusiones.isBlank()) {
+                    Path proyectoExclusiones = Paths.get(archivoExclusiones);
+                    if (Files.exists(proyectoExclusiones)) {
+                        Files.copy(proyectoExclusiones, configPath);
+                        System.out.println("[CONFIG] Copiado archivo de exclusiones del proyecto a: " + configPath);
+                        cargarExclusiones(configPath.toString());
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error creando configuración de usuario: " + e.getMessage());
+            }
         }
 
-        // Si no se cargaron exclusiones, intentar con el archivo en $HOME/.config
-        if (rutasExcluidas.isEmpty()) {
-            String userHome = System.getProperty("user.home");
-            Path configPath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt");
-            if (Files.exists(configPath)) {
-                cargarExclusiones(configPath.toString());
-            } else {
-                // Crear directorios si no existen
-                try {
-                    Files.createDirectories(configPath.getParent());
-                    System.out.println("[CONFIG] Creado directorio de configuración en: " + configPath.getParent());
-                } catch (IOException e) {
-                    System.err.println("Error creando directorio de configuración: " + e.getMessage());
-                }
-            }
+        // Si no se cargaron exclusiones, intentar con el archivo pasado como parámetro
+        if (rutasExcluidas.isEmpty() && archivoExclusiones != null && !archivoExclusiones.isBlank()) {
+            cargarExclusiones(archivoExclusiones);
+            System.out.println("[CONFIG] Cargadas exclusiones del proyecto desde: " + archivoExclusiones);
         }
     }
 
