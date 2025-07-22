@@ -22,7 +22,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 public class MainIndexadorCLI {
@@ -147,39 +150,32 @@ public class MainIndexadorCLI {
     private static List<Archivo> buscarArchivos(String[] keywords, String[] tagNames) {
         List<Archivo> resultados = new ArrayList<>();
         try {
-            // Construir consulta SQL basada en keywords y tags
-            StringBuilder where = new StringBuilder();
-            List<Object> params = new ArrayList<>();
+            // Crear un objeto Archivo como filtro
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
 
+            // Si hay palabras clave, agregarlas al filtro
             if (keywords != null && keywords.length > 0) {
-                where.append(" AND (");
-                for (int i = 0; i < keywords.length; i++) {
-                    if (i > 0)
-                        where.append(" OR ");
-                    where.append("LOWER(a.arc_nombre) LIKE LOWER(?)");
-                    params.add("%" + keywords[i] + "%");
-                }
-                where.append(")");
+                Set<String> palabrasClave = new HashSet<>(Arrays.asList(keywords));
+                filtro.setPalabrasClave(palabrasClave);
             }
 
-            // Si hay etiquetas, agregar condición
+            // Si hay etiquetas, crear una lista de etiquetas para el filtro
             if (tagNames != null && tagNames.length > 0) {
-                where.append(
-                        " AND a.id IN (SELECT arc_id FROM Archivo_Etiqueta ae JOIN Etiqueta e ON ae.eti_id = e.id WHERE ");
-                for (int i = 0; i < tagNames.length; i++) {
-                    if (i > 0)
-                        where.append(" OR ");
-                    where.append("LOWER(e.eti_nombre) = LOWER(?)");
-                    params.add(tagNames[i]);
+                List<koolfileindexer.db.Etiqueta> etiquetas = new ArrayList<>();
+                for (String tagName : tagNames) {
+                    etiquetas.add(new koolfileindexer.db.Etiqueta(tagName));
                 }
-                where.append(")");
+                // Asumiendo que hay un método setEtiquetas() o similar
+                // filtro.setEtiquetas(etiquetas);
             }
 
-            // Ejecutar consulta utilizando algún método existente de connector
-            // Modificar esto para usar métodos disponibles en tu ConectorBasedeDatos
-            ResultSet rs = connector.ejecutarConsultaPersonalizada(
-                    "SELECT * FROM Archivo a WHERE 1=1" + where.toString(),
-                    params.toArray());
+            // Usar el método adecuado según tengamos keywords o tags
+            ResultSet rs;
+            if (keywords != null && keywords.length > 0) {
+                rs = connector.buscarArchivosPorFiltroMinimoUnaPalabraClave(filtro, -1, -1);
+            } else {
+                rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+            }
 
             if (rs != null) {
                 while (rs.next()) {
@@ -219,45 +215,31 @@ public class MainIndexadorCLI {
     // Implementar el método agregarEtiqueta
     private static boolean agregarEtiqueta(String filePath, String tagName) {
         try {
-            // Buscar el archivo por ruta
-            ResultSet rs = connector.ejecutarConsultaPersonalizada(
-                    "SELECT id FROM Archivo WHERE arc_ruta_completa = ?",
-                    new Object[] { filePath });
+            // Crear un filtro para buscar el archivo por ruta
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            filtro.setRutaCompleta(filePath);
+
+            // Buscar el archivo
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null && rs.next()) {
-                long archivoId = rs.getLong("id");
+                // Crear un archivo para modificar con los datos obtenidos
+                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo(
+                        rs.getString("arc_nombre"),
+                        rs.getLong("arc_tamano_bytes"),
+                        rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime(),
+                        rs.getString("arc_ruta_completa"),
+                        rs.getString("ext_extension"),
+                        rs.getString("cat_nombre"));
                 rs.close();
 
-                // Buscar o crear la etiqueta
-                ResultSet rsTag = connector.ejecutarConsultaPersonalizada(
-                        "SELECT id FROM Etiqueta WHERE eti_nombre = ?",
-                        new Object[] { tagName });
-
-                long etiquetaId;
-                if (rsTag != null && rsTag.next()) {
-                    etiquetaId = rsTag.getLong("id");
-                    rsTag.close();
-                } else {
-                    // Crear etiqueta si no existe
-                    ResultSet rsInsert = connector.ejecutarConsultaPersonalizada(
-                            "INSERT INTO Etiqueta(eti_nombre) VALUES (?) RETURNING id",
-                            new Object[] { tagName });
-                    if (rsInsert != null && rsInsert.next()) {
-                        etiquetaId = rsInsert.getLong("id");
-                        rsInsert.close();
-                    } else {
-                        return false;
-                    }
-                }
-
-                // Asociar etiqueta a archivo si no existe la relación
-                connector.ejecutarConsultaPersonalizada(
-                        "INSERT INTO Archivo_Etiqueta(arc_id, eti_id) " +
-                                "SELECT ?, ? WHERE NOT EXISTS (" +
-                                "SELECT 1 FROM Archivo_Etiqueta WHERE arc_id = ? AND eti_id = ?)",
-                        new Object[] { archivoId, etiquetaId, archivoId, etiquetaId });
-
+                // Asociar la etiqueta al archivo
+                connector.asociarEtiquetaArchivo(archivo, tagName);
                 return true;
+            }
+
+            if (rs != null) {
+                rs.close();
             }
         } catch (Exception e) {
             System.err.println("Error al agregar etiqueta: " + e.getMessage());

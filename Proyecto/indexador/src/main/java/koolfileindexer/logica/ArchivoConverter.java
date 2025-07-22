@@ -30,17 +30,75 @@ public class ArchivoConverter {
      * Convierte un ResultSet de la base de datos a un Archivo del modelo
      */
     public static Archivo fromResultSet(ResultSet rs) throws SQLException {
-        String nombre = rs.getString("arc_nombre");
-        String rutaCompleta = rs.getString("arc_ruta_completa");
-        String extension = rs.getString("ext_extension");
-        long tamanoBytes = rs.getLong("arc_tamano_bytes");
-        LocalDateTime fechaCreacion = rs.getTimestamp("arc_fecha_creacion").toLocalDateTime();
-        LocalDateTime fechaModificacion = rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime();
+        // Imprimir columnas disponibles para diagnóstico
+        java.sql.ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+
+        // Intentar obtener el nombre con diferentes formatos posibles
+        String nombre = getStringWithAlternatives(rs, new String[] { "arc_nombre", "nombre", "name" });
+        String rutaCompleta = getStringWithAlternatives(rs,
+                new String[] { "arc_ruta_completa", "ruta_completa", "path" });
+        String extension = getStringWithAlternatives(rs, new String[] { "ext_extension", "extension", "ext" });
+        long tamanoBytes = getLongWithAlternatives(rs, new String[] { "arc_tamano_bytes", "tamano_bytes", "size" });
+
+        // Para timestamps también manejamos alternativas
+        LocalDateTime fechaCreacion = getTimestampWithAlternatives(rs,
+                new String[] { "arc_fecha_creacion", "fecha_creacion", "created_at" });
+        LocalDateTime fechaModificacion = getTimestampWithAlternatives(rs,
+                new String[] { "arc_fecha_modificacion", "fecha_modificacion", "modified_at" });
 
         Archivo archivo = new Archivo(nombre, rutaCompleta, extension, tamanoBytes, fechaCreacion, fechaModificacion);
-        archivo.setId(rs.getLong("id"));
 
-        // La categoría se puede determinar automáticamente después
+        // Intentar establecer ID si está disponible
+        try {
+            archivo.setId(getLongWithAlternatives(rs, new String[] { "id", "arc_id", "archivo_id" }));
+        } catch (Exception e) {
+            // ID podría no estar disponible, lo cual es aceptable
+            System.out.println("Nota: No se encontró ID para el archivo " + nombre);
+        }
+
         return archivo;
+    }
+
+    // Métodos auxiliares para manejar nombres de columna alternativos
+
+    private static String getStringWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
+        for (String colName : columnNames) {
+            try {
+                return rs.getString(colName);
+            } catch (SQLException e) {
+                // Intentar con el siguiente nombre
+            }
+        }
+        // Si llegamos aquí, ningún nombre alternativo funcionó
+        throw new SQLException(
+                "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
+    }
+
+    private static long getLongWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
+        for (String colName : columnNames) {
+            try {
+                return rs.getLong(colName);
+            } catch (SQLException e) {
+                // Intentar con el siguiente nombre
+            }
+        }
+        throw new SQLException(
+                "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
+    }
+
+    private static LocalDateTime getTimestampWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
+        for (String colName : columnNames) {
+            try {
+                java.sql.Timestamp ts = rs.getTimestamp(colName);
+                if (ts != null) {
+                    return ts.toLocalDateTime();
+                }
+            } catch (SQLException e) {
+                // Intentar con el siguiente nombre
+            }
+        }
+        throw new SQLException(
+                "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
     }
 }

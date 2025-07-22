@@ -489,29 +489,4 @@ public class ConectorBasedeDatos {
 
         sentenciaEjecutable.execute();
     }
-
-    /**
-     * Ejecuta una consulta SQL personalizada con parámetros
-     * 
-     * @param sql    La consulta SQL
-     * @param params Los parámetros para la consulta
-     * @return ResultSet con los resultados (debe ser cerrado por el llamador)
-     */
-    public ResultSet ejecutarConsultaPersonalizada(String sql, Object[] params) throws SQLException {
-        Connection conn = obtenerConexion();
-        try {
-            java.sql.PreparedStatement stmt = conn.prepareStatement(sql);
-            if (params != null) {
-                for (int i = 0; i < params.length; i++) {
-                    stmt.setObject(i + 1, params[i]);
-                }
-            }
-            return stmt.executeQuery();
-        } catch (SQLException e) {
-            if (conn != null)
-                conn.close();
-            throw e;
-        }
-        // No cerramos la conexión aquí porque estamos devolviendo el ResultSet
-    }
 }
