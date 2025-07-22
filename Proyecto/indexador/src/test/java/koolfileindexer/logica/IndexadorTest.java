@@ -31,6 +31,7 @@ class IndexadorTest {
 
     private Indexador indexador;
 
+    // Modificar el método setUp() para usar la versión correcta de getInstance
     @BeforeEach
     void setUp() throws Exception {
         // En lugar de intentar cambiar el campo final, modificamos el contenido de
@@ -47,12 +48,14 @@ class IndexadorTest {
         }
 
         // Crear un nuevo indexador sin archivo de exclusiones
+        // Usamos la versión sobrecargada de getInstance con un solo parámetro
         indexador = Indexador.getInstance(null);
     }
 
     @Test
     void getInstance_esSingleton() {
         Indexador i1 = Indexador.getInstance(null);
+        // Usamos la misma versión sobrecargada
         Indexador i2 = Indexador.getInstance("cualquier.txt");
         assertSame(i1, i2, "getInstance debe devolver siempre la misma instancia");
     }
@@ -120,22 +123,20 @@ class IndexadorTest {
                 "patron3");
         Files.write(exclusionesFile, exclusiones);
 
-        // Crear un nuevo indexador con este archivo de exclusiones
+        // Resetear la instancia singleton
         Field instance = Indexador.class.getDeclaredField("INSTANCIA");
         instance.setAccessible(true);
         AtomicReference<?> ref = (AtomicReference<?>) instance.get(null);
         Method compareAndSetMethod = AtomicReference.class.getMethod("compareAndSet", Object.class, Object.class);
-        // Obtener valor actual
         Object currentValue = ref.get();
-        // Establecer a null solo si tiene un valor actual
         if (currentValue != null) {
             compareAndSetMethod.invoke(ref, currentValue, null);
         }
 
+        // Crear un nuevo indexador con este archivo de exclusiones
         Indexador idx = Indexador.getInstance(exclusionesFile.toString());
 
-        // Acceder al campo de rutas excluidas (rutasExcluidas en lugar de
-        // patronesExcluidos)
+        // Acceder al campo de rutas excluidas
         Field rutasExcluidasField = Indexador.class.getDeclaredField("rutasExcluidas");
         rutasExcluidasField.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -144,16 +145,19 @@ class IndexadorTest {
         // Verificar que las rutas se cargaron correctamente
         assertEquals(3, rutasExcluidas.size(), "Debe cargar 3 patrones excluyendo comentarios y líneas vacías");
 
-        // Convertir los Path a String para facilitar la verificación
-        List<String> rutasComoStrings = rutasExcluidas.stream()
+        // Verificar que contiene los patrones (como parte de las rutas)
+        boolean contienePatron1 = rutasExcluidas.stream()
                 .map(Path::toString)
                 .map(String::toLowerCase)
-                .toList();
-
-        // Verificar que contiene los patrones (como parte de las rutas)
-        boolean contienePatron1 = rutasComoStrings.stream().anyMatch(s -> s.endsWith("patron1"));
-        boolean contienePatron2 = rutasComoStrings.stream().anyMatch(s -> s.endsWith("patron2"));
-        boolean contienePatron3 = rutasComoStrings.stream().anyMatch(s -> s.endsWith("patron3"));
+                .anyMatch(s -> s.endsWith("patron1"));
+        boolean contienePatron2 = rutasExcluidas.stream()
+                .map(Path::toString)
+                .map(String::toLowerCase)
+                .anyMatch(s -> s.endsWith("patron2"));
+        boolean contienePatron3 = rutasExcluidas.stream()
+                .map(Path::toString)
+                .map(String::toLowerCase)
+                .anyMatch(s -> s.endsWith("patron3"));
 
         assertTrue(contienePatron1, "Debe contener el primer patrón");
         assertTrue(contienePatron2, "Debe contener el segundo patrón");

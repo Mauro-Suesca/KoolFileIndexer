@@ -3,28 +3,24 @@ package koolfileindexer.logica;
 import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
-import koolfileindexer.logica.ArchivoConverter; // Añadir esta importación
-
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.Duration; // Añadir esta importación
+import java.io.IOException;
 
 /**
  * Indexador recorre carpetas por lotes, aplica exclusiones
  * y delega persistencia en BD vía ConectorBasedeDatos.
  */
-public class Indexador {
+public class Indexador implements Runnable {
     private static final AtomicReference<Indexador> INSTANCIA = new AtomicReference<>();
     private final ConectorBasedeDatos connector;
 
@@ -38,14 +34,42 @@ public class Indexador {
     private Duration intervalo = Duration.ofMinutes(5);
     private int batchSize = 100;
 
-    private Indexador(String archivoExclusiones) {
+    // Nuevos campos para controlar el ciclo de vida
+    private final List<Path> raicesAIndexar;
+    private final int tamanoLote;
+    private final Duration intervaloEjecucion;
+    private volatile boolean ejecutando = true;
+
+    // Constructor existente modificado para recibir parámetros de ejecución
+    private Indexador(String archivoExclusiones, List<Path> raices, int tamanoLote, Duration intervalo) {
         this.connector = ConectorBasedeDatos.obtenerInstancia();
+        this.raicesAIndexar = raices;
+        this.tamanoLote = tamanoLote;
+        this.intervaloEjecucion = intervalo;
         cargarExclusiones(archivoExclusiones);
     }
 
+    // Método de fábrica modificado
+    public static Indexador getInstance(String archivoExclusiones, List<Path> raices, int tamanoLote,
+            Duration intervalo) {
+        Indexador instance = INSTANCIA.get();
+        if (instance == null) {
+            instance = new Indexador(archivoExclusiones, raices, tamanoLote, intervalo);
+            if (INSTANCIA.compareAndSet(null, instance)) {
+                return instance;
+            }
+            return INSTANCIA.get();
+        }
+        return instance;
+    }
+
+    /**
+     * Método de fábrica sobrecargado para mantener compatibilidad con tests
+     */
     public static Indexador getInstance(String archivoExclusiones) {
-        INSTANCIA.compareAndSet(null, new Indexador(archivoExclusiones));
-        return INSTANCIA.get();
+        Path homePath = Paths.get(System.getProperty("user.home"));
+        List<Path> raices = List.of(homePath);
+        return getInstance(archivoExclusiones, raices, 100, Duration.ofMinutes(5));
     }
 
     /**
@@ -100,6 +124,7 @@ public class Indexador {
         return Collections.unmodifiableSet(rutasExcluidas);
     }
 
+    // Verificar que este método siga conteniendo estas validaciones
     private boolean excluirArchivo(Path p) {
         Path norm = p.toAbsolutePath().normalize();
 
@@ -299,5 +324,49 @@ public class Indexador {
         Archivo a = new Archivo(nombre, ruta, ext, tam, cre, mod);
         a.asignarCategoria(Categoria.clasificar(a));
         return a;
+    }
+
+    // Método run que ejecuta toda la lógica del indexador
+    @Override
+    public void run() {
+        try {
+            // Indexación inicial de todas las raíces
+            System.out.println("\n=== Iniciando indexación inicial ===");
+            for (Path raiz : raicesAIndexar) {
+                System.out.println("\n→ Indexando (batch=" + tamanoLote + "): " + raiz);
+                recorrerDirectorio(raiz, tamanoLote);
+            }
+            System.out.println("\n=== Indexación inicial completada ===");
+
+            // Monitoreo periódico
+            System.out.println("\n=== Iniciando monitor periódico ===");
+            while (ejecutando) {
+                try {
+                    // Indexación periódica de HOME
+                    Path homePath = Paths.get(System.getProperty("user.home"));
+                    recorrerDirectorio(homePath, tamanoLote);
+
+                    // Esperar hasta el próximo intervalo
+                    Thread.sleep(intervaloEjecucion.toMillis());
+                } catch (InterruptedException e) {
+                    System.out.println("Indexador interrumpido durante la espera");
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    System.err.println("Error durante la indexación periódica: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fatal en el indexador: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Método para detener el indexador
+    public void detener() {
+        this.ejecutando = false;
+        if (this.scheduler != null) {
+            this.scheduler.shutdown();
+        }
     }
 }

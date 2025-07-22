@@ -6,6 +6,8 @@ import java.net.SocketException;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import jnr.unixsocket.UnixServerSocket;
 import jnr.unixsocket.UnixSocket;
@@ -54,5 +56,55 @@ public class SocketServer {
 
     public void registerAction(String methodName, ServerFunction<Request, Response> method) {
         this.methods.put(methodName, method);
+    }
+
+    /**
+     * Envía una tarea para ser ejecutada por el pool de hilos del servidor
+     * 
+     * @param task La tarea a ejecutar
+     * @return Future<?> Un objeto Future que representa la tarea en ejecución
+     */
+    public Future<?> submit(Runnable task) {
+        return this.threadPool.submit(task);
+    }
+
+    /**
+     * Cierra el servidor y libera sus recursos
+     */
+    public void close() throws IOException {
+        if (this.innerSocket != null) {
+            try {
+                // UnixServerSocket no tiene método close(), necesitamos acceder al canal
+                // Obtén el canal a través de reflexión o usando un método getter
+                java.lang.reflect.Field channelField = UnixServerSocket.class.getDeclaredField("channel");
+                channelField.setAccessible(true);
+                Object channel = channelField.get(this.innerSocket);
+
+                if (channel != null && channel instanceof jnr.unixsocket.UnixServerSocketChannel) {
+                    ((jnr.unixsocket.UnixServerSocketChannel) channel).close();
+                }
+            } catch (Exception e) {
+                System.err.println("Error al cerrar el socket: " + e.getMessage());
+                // Seguir intentando cerrar el threadPool incluso si falla el cierre del socket
+            } finally {
+                this.innerSocket = null; // Prevenir múltiples intentos de cierre
+            }
+        }
+
+        if (this.threadPool != null) {
+            this.threadPool.shutdown();
+            try {
+                // Esperar hasta 5 segundos para que terminen las tareas en curso
+                if (!this.threadPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                    // Forzar terminación si tardan demasiado
+                    this.threadPool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                // Preservar el estado de interrupción
+                Thread.currentThread().interrupt();
+            } finally {
+                this.threadPool = null; // Prevenir múltiples intentos de cierre
+            }
+        }
     }
 }
