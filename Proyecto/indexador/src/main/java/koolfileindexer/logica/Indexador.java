@@ -266,6 +266,44 @@ public class Indexador implements Runnable {
         }
     }
 
+    // Añadir este método para detectar cambios en archivos
+    private void detectarCambiosArchivo(Path nuevaRuta, BasicFileAttributes attrs, ResultSet rs) throws SQLException {
+        try {
+            // Obtener información actual del archivo en la BD
+            String nombreActualEnBD = rs.getString("arc_nombre");
+            String rutaActualEnBD = rs.getString("arc_ruta_completa");
+
+            // Información del archivo en el sistema de archivos
+            String nuevoNombre = nuevaRuta.getFileName().toString();
+            String nuevaRutaCompleta = nuevaRuta.toAbsolutePath().normalize().toString();
+
+            // Si el nombre cambió pero la ruta base es similar, actualizar el nombre
+            if (!nuevoNombre.equals(nombreActualEnBD)) {
+                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                archivo.setRutaCompleta(nuevaRutaCompleta);
+                archivo.setNombre(nuevoNombre);
+                archivo.setExtension(rs.getString("ext_extension"));
+
+                connector.actualizarNombreArchivo(archivo, nombreActualEnBD);
+                System.out.println("[RENOMBRADO] " + nombreActualEnBD + " -> " + nuevoNombre);
+            }
+
+            // Si la ruta cambió pero el nombre es el mismo, actualizar la ubicación
+            Path rutaActualPath = Paths.get(rutaActualEnBD);
+            if (!rutaActualPath.getParent().equals(nuevaRuta.getParent())) {
+                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                archivo.setRutaCompleta(nuevaRutaCompleta);
+                archivo.setNombre(nuevoNombre);
+                archivo.setExtension(rs.getString("ext_extension"));
+
+                connector.actualizarUbicacionArchivo(archivo, rutaActualEnBD);
+                System.out.println("[MOVIDO] " + rutaActualEnBD + " -> " + nuevaRutaCompleta);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al detectar cambios en archivo: " + e.getMessage());
+        }
+    }
+
     private void actualizarArchivoExistente(Archivo archivoModelo, BasicFileAttributes attrs, ResultSet rs)
             throws Exception {
         archivoModelo.setId(rs.getLong("id"));
@@ -274,7 +312,10 @@ public class Indexador implements Runnable {
                 LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault()));
 
         try {
-            // Usar Archivo de db en lugar de ArchivoBD
+            // Detectar y manejar cambios de nombre o ubicación
+            detectarCambiosArchivo(Paths.get(archivoModelo.getRutaCompleta()), attrs, rs);
+
+            // Actualizar el resto de información
             koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
             connector.actualizarTamanoFechaModificacionArchivo(archivoDb);
             connector.actualizarCategoriaArchivo(archivoDb);
@@ -286,10 +327,27 @@ public class Indexador implements Runnable {
 
     private void insertarNuevoArchivo(Archivo archivoModelo, BasicFileAttributes attrs) throws Exception {
         try {
-            // Usar Archivo de db en lugar de ArchivoBD
             koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
             connector.crearArchivo(archivoDb);
-            System.out.println("[INSERTADO]  " + archivoModelo.getRutaCompleta());
+
+            // Añadir palabras clave básicas (nombre sin extensión, extensión)
+            String nombreSinExt = archivoModelo.getNombre();
+            int dotIndex = nombreSinExt.lastIndexOf('.');
+            if (dotIndex > 0) {
+                nombreSinExt = nombreSinExt.substring(0, dotIndex);
+            }
+
+            // Asociar el nombre como palabra clave si es válido
+            if (nombreSinExt.length() > 0) {
+                connector.asociarPalabraClaveArchivo(archivoDb, nombreSinExt.toLowerCase());
+            }
+
+            // La extensión como palabra clave
+            if (!archivoModelo.getExtension().isEmpty()) {
+                connector.asociarPalabraClaveArchivo(archivoDb, archivoModelo.getExtension().toLowerCase());
+            }
+
+            System.out.println("[INSERTADO] " + archivoModelo.getRutaCompleta());
 
             // Buscar usando el mismo archivoDb para la consulta
             ResultSet nuevoRs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
@@ -346,6 +404,9 @@ public class Indexador implements Runnable {
                     Path homePath = Paths.get(System.getProperty("user.home"));
                     recorrerDirectorio(homePath, tamanoLote);
 
+                    // Añadir limpieza periódica
+                    limpiarArchivosNoExistentes();
+
                     // Esperar hasta el próximo intervalo
                     Thread.sleep(intervaloEjecucion.toMillis());
                 } catch (InterruptedException e) {
@@ -353,7 +414,7 @@ public class Indexador implements Runnable {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    System.err.println("Error durante la indexación periódica: " + e.getMessage());
+                    System.err.println("Error en ciclo de indexación: " + e.getMessage());
                 }
             }
         } catch (Exception e) {
@@ -367,6 +428,79 @@ public class Indexador implements Runnable {
         this.ejecutando = false;
         if (this.scheduler != null) {
             this.scheduler.shutdown();
+        }
+    }
+
+    public boolean agregarPalabraClave(String filePath, String keyword) {
+        try {
+            // Lógica para agregar una palabra clave a un archivo existente
+            // 1. Buscar el archivo por su ruta
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            filtro.setRutaCompleta(filePath);
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        // 2. Obtener el ID del archivo
+                        long archivoId = rs.getLong("id");
+
+                        // 3. Asociar la nueva palabra clave al archivo
+                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                        archivo.setRutaCompleta(filePath);
+                        archivo.setNombre(rs.getString("arc_nombre"));
+                        archivo.setExtension(rs.getString("ext_extension"));
+                        connector.asociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
+                        System.out.println("[PALABRA CLAVE AGREGADA] " + keyword + " a " + filePath);
+                        return true;
+                    } else {
+                        System.err.println("Archivo no encontrado: " + filePath);
+                        return false;
+                    }
+                }
+            } else {
+                System.err.println("Error al buscar el archivo en la base de datos");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error al agregar palabra clave: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Añadir este método a la clase Indexador
+    public void limpiarArchivosNoExistentes() {
+        System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
+        try {
+            // Crear un filtro vacío para obtener todos los archivos
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+            if (rs != null) {
+                int eliminados = 0;
+                try (rs) {
+                    while (rs.next()) {
+                        String rutaCompleta = rs.getString("arc_ruta_completa");
+                        Path path = Paths.get(rutaCompleta);
+
+                        // Verificar si el archivo ya no existe
+                        if (!Files.exists(path)) {
+                            koolfileindexer.db.Archivo archivoDb = new koolfileindexer.db.Archivo();
+                            archivoDb.setRutaCompleta(rutaCompleta);
+                            archivoDb.setNombre(rs.getString("arc_nombre"));
+                            archivoDb.setExtension(rs.getString("ext_extension"));
+
+                            // Eliminar el archivo de la BD
+                            connector.eliminarArchivo(archivoDb);
+                            eliminados++;
+                            System.out.println("[ELIMINADO] " + rutaCompleta + " (ya no existe en el sistema)");
+                        }
+                    }
+                }
+                System.out.println("[LIMPIEZA] Total de archivos eliminados: " + eliminados);
+            }
+        } catch (Exception e) {
+            System.err.println("Error durante la limpieza de archivos: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

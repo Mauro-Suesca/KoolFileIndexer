@@ -33,4 +33,28 @@ class ArchivoAdvancedTest {
         assertTrue(a.getFechaModificacion().isAfter(antes),
                 "la fecha de modificación debe actualizarse al eliminar clave");
     }
+
+    @Test
+    void agregarPalabraClaveVacia_lanzaExcepcion() {
+        LocalDateTime now = LocalDateTime.now();
+        Archivo a = new Archivo("f.txt", "/tmp/f.txt", "txt", 100, now, now);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> a.agregarPalabraClave(""));
+
+        assertTrue(exception.getMessage().contains("inválida"),
+                "El mensaje debe indicar que la palabra clave es inválida");
+    }
+
+    @Test
+    void agregarPalabraClaveSoloEspacios_lanzaExcepcion() {
+        LocalDateTime now = LocalDateTime.now();
+        Archivo a = new Archivo("f.txt", "/tmp/f.txt", "txt", 100, now, now);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> a.agregarPalabraClave("   "));
+
+        assertTrue(exception.getMessage().contains("inválida"),
+                "El mensaje debe indicar que la palabra clave es inválida");
+    }
 }

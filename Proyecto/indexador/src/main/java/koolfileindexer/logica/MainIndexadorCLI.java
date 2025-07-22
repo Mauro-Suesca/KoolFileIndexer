@@ -142,11 +142,62 @@ public class MainIndexadorCLI {
                 return Response.err(new ErrorMessage("Error al agregar etiqueta: " + e.getMessage()));
             }
         });
+
+        // Registrar acción para agregar palabra clave
+        server.registerAction("addKeyword", (Request req) -> {
+            try {
+                String rawData = req.getRawData();
+                String[] lines = rawData.split("\r\n");
+
+                if (lines.length < 2) {
+                    return Response.err(new ErrorMessage("Formato incorrecto: se esperan keyword y filePath"));
+                }
+
+                String keyword = lines[0].split(": ")[1];
+                String filePath = lines[1].split(": ")[1];
+
+                boolean success = agregarPalabraClave(filePath, keyword);
+                if (success) {
+                    return Response.ok("Palabra clave agregada correctamente");
+                } else {
+                    return Response.err(new ErrorMessage("No se pudo agregar la palabra clave"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Response.err(new ErrorMessage("Error al agregar palabra clave: " + e.getMessage()));
+            }
+        });
+
+        // Registrar acción para eliminar palabra clave
+        server.registerAction("removeKeyword", (Request req) -> {
+            try {
+                String rawData = req.getRawData();
+                String[] lines = rawData.split("\r\n");
+
+                if (lines.length < 2) {
+                    return Response.err(new ErrorMessage("Formato incorrecto: se esperan keyword y filePath"));
+                }
+
+                String keyword = lines[0].split(": ")[1];
+                String filePath = lines[1].split(": ")[1];
+
+                boolean success = eliminarPalabraClave(filePath, keyword);
+                if (success) {
+                    return Response.ok("Palabra clave eliminada correctamente");
+                } else {
+                    return Response.err(new ErrorMessage("No se pudo eliminar la palabra clave"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Response.err(new ErrorMessage("Error al eliminar palabra clave: " + e.getMessage()));
+            }
+        });
     }
 
     // Métodos auxiliares para la API
 
-    // Implementar el método buscarArchivos
+    // Modificar el método buscarArchivos para usar el método más adecuado según el
+    // caso
     private static List<Archivo> buscarArchivos(String[] keywords, String[] tagNames) {
         List<Archivo> resultados = new ArrayList<>();
         try {
@@ -165,15 +216,17 @@ public class MainIndexadorCLI {
                 for (String tagName : tagNames) {
                     etiquetas.add(new koolfileindexer.db.Etiqueta(tagName));
                 }
-                // Asumiendo que hay un método setEtiquetas() o similar
-                // filtro.setEtiquetas(etiquetas);
+                // No hay método setEtiquetas pero asumimos que se maneja por separado
             }
 
-            // Usar el método adecuado según tengamos keywords o tags
+            // Elegir el método más apropiado según la cantidad de keywords
             ResultSet rs;
-            if (keywords != null && keywords.length > 0) {
+            if (keywords != null && keywords.length > 1) {
+                // Con múltiples palabras clave, usar búsqueda flexible (al menos una
+                // coincidencia)
                 rs = connector.buscarArchivosPorFiltroMinimoUnaPalabraClave(filtro, -1, -1);
             } else {
+                // Con una sola palabra o sin palabras, usar búsqueda exacta
                 rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
             }
 
@@ -247,6 +300,85 @@ public class MainIndexadorCLI {
         }
 
         return false;
+    }
+
+    // Implementar el método agregarPalabraClave
+    private static boolean agregarPalabraClave(String filePath, String keyword) {
+        try {
+            // Validar palabra clave
+            if (keyword == null || keyword.trim().isEmpty()) {
+                System.err.println("La palabra clave no puede estar vacía");
+                return false;
+            }
+
+            // Buscar el archivo por ruta completa
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            filtro.setRutaCompleta(filePath);
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        // Crear objeto archivo con los datos necesarios para asociar
+                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                        archivo.setRutaCompleta(filePath);
+                        archivo.setNombre(rs.getString("arc_nombre"));
+                        archivo.setExtension(rs.getString("ext_extension"));
+
+                        // Asociar la palabra clave
+                        connector.asociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
+                        return true;
+                    } else {
+                        System.err.println("No se encontró el archivo: " + filePath);
+                        return false;
+                    }
+                }
+            } else {
+                System.err.println("Error al buscar el archivo");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error al agregar palabra clave: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Implementar el método eliminarPalabraClave
+    private static boolean eliminarPalabraClave(String filePath, String keyword) {
+        try {
+            // Buscar el archivo por ruta completa
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            filtro.setRutaCompleta(filePath);
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        // Crear objeto archivo con los datos necesarios
+                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                        archivo.setRutaCompleta(filePath);
+                        archivo.setNombre(rs.getString("arc_nombre"));
+                        archivo.setExtension(rs.getString("ext_extension"));
+
+                        // Desasociar la palabra clave
+                        connector.desasociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
+                        System.out.println("[PALABRA CLAVE ELIMINADA] " + keyword + " de " + filePath);
+                        return true;
+                    } else {
+                        System.err.println("Archivo no encontrado: " + filePath);
+                        return false;
+                    }
+                }
+            } else {
+                System.err.println("Error al buscar el archivo");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error al eliminar palabra clave: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Mantener métodos existentes de verificación y configuración
