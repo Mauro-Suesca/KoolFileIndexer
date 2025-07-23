@@ -3,6 +3,7 @@ package koolfileindexer.logica;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import koolfileindexer.modelo.Archivo;
@@ -38,10 +39,20 @@ public class ArchivoConverter {
         long tamanoBytes = getLongWithAlternatives(rs, new String[] { "arc_tamano_bytes", "tamano_bytes", "size" });
 
         // Para timestamps también manejamos alternativas
-        LocalDateTime fechaCreacion = getTimestampWithAlternatives(rs,
-                new String[] { "arc_fecha_creacion", "fecha_creacion", "created_at" });
         LocalDateTime fechaModificacion = getTimestampWithAlternatives(rs,
                 new String[] { "arc_fecha_modificacion", "fecha_modificacion", "modified_at" });
+
+        // Intentar obtener fecha de creación, si no está disponible usar la fecha de
+        // modificación
+        LocalDateTime fechaCreacion;
+        try {
+            fechaCreacion = getTimestampWithAlternatives(rs,
+                    new String[] { "arc_fecha_creacion", "fecha_creacion", "created_at" });
+        } catch (SQLException e) {
+            // Si no hay fecha de creación, usar la fecha de modificación
+            fechaCreacion = fechaModificacion;
+            System.out.println("Nota: Usando fecha_modificacion como fecha_creacion para " + nombre);
+        }
 
         Archivo archivo = new Archivo(nombre, rutaCompleta, extension, tamanoBytes, fechaCreacion, fechaModificacion);
 
@@ -92,15 +103,27 @@ public class ArchivoConverter {
 
     // Métodos auxiliares para manejar nombres de columna alternativos
     public static String getStringWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
-        for (String colName : columnNames) {
+        // Agregar las columnas de los procedimientos almacenados
+        if (columnNames.length > 0 && columnNames[0].contains("ruta")) {
+            columnNames = new String[] { "path", "arc_path", "arc_ruta_completa", "ruta_completa" };
+        } else if (columnNames.length > 0 && columnNames[0].contains("nombre")) {
+            columnNames = new String[] { "nombre", "arc_nombre", "name" };
+        } else if (columnNames.length > 0 && columnNames[0].contains("extension")) {
+            columnNames = new String[] { "extension", "ext_extension", "ext" };
+        } else if (columnNames.length > 0 && columnNames[0].contains("categoria")) {
+            columnNames = new String[] { "categoria", "cat_nombre", "category" };
+        }
+
+        for (String name : columnNames) {
             try {
-                return rs.getString(colName);
+                return rs.getString(name);
             } catch (SQLException e) {
                 // Intentar con el siguiente nombre
             }
         }
-        throw new SQLException(
-                "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
+
+        throw new SQLException("No se encontró ninguna columna entre las alternativas: " +
+                String.join(", ", columnNames));
     }
 
     /**
@@ -108,12 +131,12 @@ public class ArchivoConverter {
      * posibles
      */
     public static long getLongWithAlternatives(ResultSet rs, String[] alternatives) throws SQLException {
-        // Añadir "tamano" y "arc_tamano" a las alternativas
+        // Añadir los nombres que realmente tienen las columnas en las funciones SQL
         String[] updatedAlternatives = new String[] {
-                "tamano", // Nombre en el resultado de la función
-                "arc_tamano", // Nombre en la tabla original
-                "arc_tamano_bytes", // Nombre anterior
-                "tamano_bytes", // Nombre anterior
+                "tamano", // Nombre en el resultado de la función SQL
+                "arc_tamano", // Nombre real en la tabla
+                "arc_tamano_bytes", // Nombre anterior que se buscaba en el código
+                "tamano_bytes", // Nombre alternativo
                 "size" // Nombre en inglés
         };
 
