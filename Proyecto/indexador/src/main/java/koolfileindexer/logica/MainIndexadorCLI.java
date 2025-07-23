@@ -564,30 +564,21 @@ public class MainIndexadorCLI {
     }
 
     private static List<Path> seleccionarRaices(String[] args) {
-        String modo = args.length > 0 ? args[0].toLowerCase() : "demo";
-        List<Path> rootsToScan;
+        // Siempre usar modo FULL independientemente de los argumentos
+        System.out.println("\n[Full] Índice de todas las unidades + HOME:");
+        List<Path> rootsToScan = new ArrayList<>();
 
-        switch (modo) {
-            case "docs" -> {
-                System.out.println("\n[Docs] Índice de tu carpeta DOCUMENTS:");
-                rootsToScan = List.of(Paths.get(System.getProperty("user.home"), "Documents"));
-            }
-            case "full" -> {
-                System.out.println("\n[Full] Índice de todas las unidades + HOME:");
-                rootsToScan = new ArrayList<>();
-                for (java.io.File disco : java.io.File.listRoots()) {
-                    Path p = disco.toPath();
-                    if (p.toFile().isDirectory()) {
-                        rootsToScan.add(p);
-                    }
-                }
-                rootsToScan.add(Paths.get(System.getProperty("user.home")));
-            }
-            default -> {
-                System.out.println("\n[Demo] Índice de tu carpeta HOME:");
-                rootsToScan = List.of(Paths.get(System.getProperty("user.home")));
+        // Añadir todos los discos/raíces
+        for (java.io.File disco : java.io.File.listRoots()) {
+            Path p = disco.toPath();
+            if (p.toFile().isDirectory()) {
+                rootsToScan.add(p);
             }
         }
+
+        // Añadir HOME
+        rootsToScan.add(Paths.get(System.getProperty("user.home")));
+
         return rootsToScan;
     }
 

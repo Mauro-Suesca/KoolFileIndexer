@@ -169,6 +169,9 @@ public class Indexador implements Runnable {
         } catch (IOException e) {
             System.err.println("Error leyendo exclusiones: " + e.getMessage());
         }
+
+        System.out.println("[DEBUG] Exclusiones cargadas:");
+        rutasExcluidas.forEach(p -> System.out.println("  - " + p));
     }
 
     public Set<Path> getRutasExcluidas() {
@@ -178,6 +181,14 @@ public class Indexador implements Runnable {
     // Verificar que este método siga conteniendo estas validaciones
     private boolean excluirArchivo(Path p) {
         Path norm = p.toAbsolutePath().normalize();
+
+        // Añadir código de depuración para paths específicos
+        if (norm.toString().contains("binbows")) {
+            System.out.println("[DEBUG] Evaluando exclusión para: " + norm);
+            for (Path excl : rutasExcluidas) {
+                System.out.println("   - Comparando con: " + excl + " → Resultado: " + norm.startsWith(excl));
+            }
+        }
 
         // Exclusiones personalizadas del archivo
         for (Path excl : rutasExcluidas) {
@@ -206,15 +217,22 @@ public class Indexador implements Runnable {
             return true;
         }
 
-        // Rutas del sistema (Windows, Program Files, etc.)
-        if (rutaMin.contains("\\windows\\") || rutaMin.contains("/windows/")) {
-            return true;
+        // Rutas del sistema adaptadas para ser más específicas
+        // En Windows
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            if (rutaMin.contains("\\windows\\") ||
+                    rutaMin.contains("\\program files\\") ||
+                    rutaMin.contains("\\archivos de programa\\")) {
+                return true;
+            }
         }
-        if (rutaMin.contains("\\program files\\") || rutaMin.contains("/program files/")) {
-            return true;
-        }
-        if (rutaMin.contains("\\archivos de programa\\") || rutaMin.contains("/archivos de programa/")) {
-            return true;
+        // En Linux, excluir solo directorios específicos del sistema
+        else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+            if (rutaMin.startsWith("/proc/") ||
+                    rutaMin.startsWith("/sys/") ||
+                    rutaMin.startsWith("/dev/")) {
+                return true;
+            }
         }
 
         // Archivos específicos a excluir
@@ -584,7 +602,7 @@ public class Indexador implements Runnable {
 
                         // Verificar si el archivo ya no existe
                         if (!Files.exists(path)) {
-                            koolfileindexer.db.Archivo archivoDb = new koolfileindexer.db.Archivo(
+                            ArchivoAdapter archivoDb = new ArchivoAdapter(
                                     rs.getString("arc_nombre"),
                                     0, // El tamaño no es relevante para eliminar
                                     LocalDateTime.now(), // La fecha no es relevante para eliminar

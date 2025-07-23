@@ -43,8 +43,8 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
      */
     @Override
     public List<Etiqueta> getEtiquetas() {
-        List<Etiqueta> etiquetas = super.getEtiquetas();
-        return (etiquetas == null || etiquetas.isEmpty()) ? null : etiquetas;
+        // Siempre devolver null para evitar problemas con listas vacías
+        return null;
     }
 
     // Implementar correctamente estos setters
