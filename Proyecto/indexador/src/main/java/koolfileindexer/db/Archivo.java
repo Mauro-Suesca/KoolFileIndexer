@@ -39,13 +39,12 @@ public class Archivo {
     // Constructor por defecto modificado para filtros
     public Archivo() {
         this.modelo = new koolfileindexer.modelo.Archivo(
-                "", // nombre - cadena vacía en lugar de null
-                "", // rutaCompleta - cadena vacía en lugar de null
-                "", // extensión - cadena vacía en lugar de null
-                0, // tamaño (se mantiene 0 ya que es primitivo)
-                LocalDateTime.now(), // fecha creación (se mantiene)
-                LocalDateTime.now() // fecha modificación (se mantiene)
-        );
+                " ", // Usar espacio en lugar de cadena vacía
+                " ", // Usar espacio en lugar de cadena vacía
+                " ", // Usar espacio en lugar de cadena vacía
+                0,
+                LocalDateTime.now(),
+                LocalDateTime.now());
 
         // No asignamos categoría para que no filtre por categoría
     }
@@ -53,7 +52,7 @@ public class Archivo {
     // Getters para ConectorBaseDatos
     public String getNombre() {
         String nombre = modelo.getNombre();
-        return nombre.isEmpty() ? null : nombre;
+        return nombre != null && nombre.trim().isEmpty() ? null : nombre;
     }
 
     public long getTamanoBytes() {
@@ -66,12 +65,12 @@ public class Archivo {
 
     public String getRutaCompleta() {
         String ruta = modelo.getRutaCompleta();
-        return ruta.isEmpty() ? null : ruta;
+        return ruta != null && ruta.trim().isEmpty() ? null : ruta;
     }
 
     public String getExtension() {
         String ext = modelo.getExtension();
-        return ext.isEmpty() ? null : ext;
+        return ext != null && ext.trim().isEmpty() ? null : ext;
     }
 
     public Categoria getCategoria() {
