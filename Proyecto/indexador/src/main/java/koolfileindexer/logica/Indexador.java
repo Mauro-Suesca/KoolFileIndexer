@@ -182,14 +182,6 @@ public class Indexador implements Runnable {
     private boolean excluirArchivo(Path p) {
         Path norm = p.toAbsolutePath().normalize();
 
-        // Añadir código de depuración para paths específicos
-        if (norm.toString().contains("binbows")) {
-            System.out.println("[DEBUG] Evaluando exclusión para: " + norm);
-            for (Path excl : rutasExcluidas) {
-                System.out.println("   - Comparando con: " + excl + " → Resultado: " + norm.startsWith(excl));
-            }
-        }
-
         // Exclusiones personalizadas del archivo
         for (Path excl : rutasExcluidas) {
             if (norm.startsWith(excl)) {
@@ -197,7 +189,32 @@ public class Indexador implements Runnable {
             }
         }
 
-        String nombre = norm.getFileName().toString().toLowerCase();
+        // Manejar el caso de rutas raíz donde getFileName() puede ser null
+        Path fileName = norm.getFileName();
+        if (fileName == null) {
+            // Es una ruta raíz, usar solo la ruta completa para evaluación
+            String rutaMin = norm.toString().toLowerCase();
+
+            // Evaluar exclusiones basadas en la ruta
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                if (rutaMin.contains("\\windows\\") ||
+                        rutaMin.contains("\\program files\\") ||
+                        rutaMin.contains("\\archivos de programa\\")) {
+                    return true;
+                }
+            } else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+                if (rutaMin.startsWith("/proc/") ||
+                        rutaMin.startsWith("/sys/") ||
+                        rutaMin.startsWith("/dev/")) {
+                    return true;
+                }
+            }
+
+            return false; // No excluir por defecto si es ruta raíz
+        }
+
+        // Procesar normalmente si no es una ruta raíz
+        String nombre = fileName.toString().toLowerCase();
         String rutaMin = norm.toString().toLowerCase();
 
         // Archivos ocultos
