@@ -6,10 +6,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 public class MainIndexadorCLI {
     private static final int DEFAULT_BATCH = 100;
@@ -127,6 +131,62 @@ public class MainIndexadorCLI {
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * Busca archivos según keywords, etiquetas y filtros adicionales
+     */
+    public List<koolfileindexer.modelo.Archivo> buscarArchivos(String keywords, String tags,
+            Map<String, String> filtros) {
+        System.out.println("Búsqueda recibida - Keywords: " + keywords + " - Tags: " +
+                (tags == null || tags.isBlank() ? "ninguna" : tags) + " - Filtros: " + filtros);
+
+        try {
+            // Crear ArchivoAdapter en lugar de Archivo
+            ArchivoAdapter filtro = new ArchivoAdapter();
+
+            // Establecer criterios de búsqueda
+            if (filtros != null) {
+                if (filtros.containsKey("name")) {
+                    filtro.setNombre(filtros.get("name"));
+                }
+                if (filtros.containsKey("ext")) {
+                    filtro.setExtension(filtros.get("ext"));
+                }
+                if (filtros.containsKey("path")) {
+                    filtro.setRutaCompleta(filtros.get("path"));
+                }
+                // Otros filtros según sea necesario
+            }
+
+            // Ejecutar la búsqueda con el filtro seguro
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+            // Procesar resultados
+            List<koolfileindexer.modelo.Archivo> resultados = new ArrayList<>();
+            if (rs != null) {
+                try (rs) {
+                    while (rs.next()) {
+                        // Crear objeto Archivo desde el ResultSet
+                        koolfileindexer.modelo.Archivo archivo = new koolfileindexer.modelo.Archivo(
+                                rs.getString("arc_nombre"),
+                                rs.getString("arc_ruta_completa"),
+                                rs.getString("ext_extension"),
+                                rs.getLong("arc_tamano"),
+                                rs.getTimestamp("arc_fecha_creacion").toLocalDateTime(),
+                                rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime());
+                        archivo.setId(rs.getLong("arc_id"));
+                        resultados.add(archivo);
+                    }
+                }
+            }
+            return resultados;
+
+        } catch (Exception e) {
+            System.err.println("Error al buscar archivos: " + e.getMessage());
+            e.printStackTrace();
+            return Collections.emptyList();
         }
     }
 }

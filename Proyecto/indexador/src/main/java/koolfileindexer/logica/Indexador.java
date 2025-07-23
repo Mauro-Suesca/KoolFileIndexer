@@ -4,6 +4,7 @@ import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
 import koolfileindexer.logica.ArchivoConverter; // Añadir esta importación
+import koolfileindexer.logica.ArchivoAdapter; // Importar ArchivoAdapter desde el paquete correcto
 
 import java.io.File;
 import java.io.IOException;
@@ -299,5 +300,33 @@ public class Indexador {
         Archivo a = new Archivo(nombre, ruta, ext, tam, cre, mod);
         a.asignarCategoria(Categoria.clasificar(a));
         return a;
+    }
+
+    public void limpiarArchivosNoExistentes() {
+        System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
+        try {
+            // Usar ArchivoAdapter en lugar de Archivo
+            ArchivoAdapter filtro = new ArchivoAdapter();
+            // No necesitamos establecer ningún valor específico ya que getEtiquetas()
+            // devolverá null
+
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+
+            if (rs != null) {
+                try (rs) {
+                    List<Long> idsExistentes = new ArrayList<>();
+                    while (rs.next()) {
+                        idsExistentes.add(rs.getLong("id"));
+                    }
+
+                    // Aquí deberías implementar la lógica para comparar con los archivos del
+                    // sistema
+                    // y decidir cuáles eliminar. Por ahora, solo se imprimen los IDs existentes.
+                    System.out.println("[LIMPIEZA] Archivos indexados existentes (por ID): " + idsExistentes);
+                }
+            }
+        } catch (SQLException sqlEx) {
+            System.err.println("Error en limpieza de archivos: " + sqlEx.getMessage());
+        }
     }
 }
