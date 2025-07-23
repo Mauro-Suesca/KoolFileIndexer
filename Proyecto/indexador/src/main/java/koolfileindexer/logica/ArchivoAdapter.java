@@ -2,6 +2,7 @@ package koolfileindexer.logica;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import koolfileindexer.db.Etiqueta;
 
 /**
@@ -19,11 +20,11 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
      * Constructor por defecto para consultas de filtro
      */
     public ArchivoAdapter() {
-        // Usar el constructor con parámetros de la clase padre con valores seguros
         super("filtro_temp", 0, LocalDateTime.now(), "filtro_temp", "filtro_temp", "OTRO");
-        this.nombre = "filtro_temp";
-        this.rutaCompleta = "filtro_temp";
-        this.extension = "filtro_temp";
+        // CAMBIAR ESTO:
+        this.nombre = null;
+        this.rutaCompleta = null;
+        this.extension = null;
     }
 
     /**
@@ -42,51 +43,51 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
      */
     @Override
     public List<Etiqueta> getEtiquetas() {
-        return null;
+        List<Etiqueta> etiquetas = super.getEtiquetas();
+        return (etiquetas == null || etiquetas.isEmpty()) ? null : etiquetas;
     }
 
-    /**
-     * Sobrescribe getNombre para usar nuestro propio valor
-     */
-    @Override
-    public String getNombre() {
-        return this.nombre;
-    }
-
-    /**
-     * Establece el nombre del filtro
-     */
+    // Implementar correctamente estos setters
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
 
-    /**
-     * Sobrescribe getRutaCompleta para usar nuestro propio valor
-     */
-    @Override
-    public String getRutaCompleta() {
-        return this.rutaCompleta;
-    }
-
-    /**
-     * Establece la ruta completa del filtro
-     */
     public void setRutaCompleta(String rutaCompleta) {
         this.rutaCompleta = rutaCompleta;
     }
 
-    /**
-     * Sobrescribe getExtension para usar nuestro propio valor
-     */
+    public void setExtension(String extension) {
+        this.extension = extension;
+    }
+
+    // Modificar los siguientes métodos:
+    @Override
+    public String getNombre() {
+        return this.nombre; // Devuelve null si nombre es null
+    }
+
+    @Override
+    public String getRutaCompleta() {
+        return this.rutaCompleta; // Devuelve null si rutaCompleta es null
+    }
+
     @Override
     public String getExtension() {
-        return this.extension;
+        return this.extension; // Devuelve null si extension es null
+    }
+
+    @Override
+    public koolfileindexer.db.Categoria getCategoria() {
+        // Devuelve null para evitar filtros por categoría en consultas
+        return null;
     }
 
     /**
-     * Establece la extensión del filtro
+     * Sobrescribe getPalabrasClave para retornar null en vez de un conjunto vacío
      */
-    public void setExtension(String extension) {
-        this.extension = extension;
+    @Override
+    public Set<String> getPalabrasClave() {
+        Set<String> claves = super.getPalabrasClave();
+        return (claves == null || claves.isEmpty()) ? null : claves;
     }
 }

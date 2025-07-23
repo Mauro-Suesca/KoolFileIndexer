@@ -129,4 +129,44 @@ public class ArchivoConverter {
         throw new SQLException(
                 "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
     }
+
+    public static class ArchivoAdapter extends koolfileindexer.db.Archivo {
+        private String nombre;
+        private String rutaCompleta;
+        private String extension;
+
+        public ArchivoAdapter(String nombre, long tamanoBytes, LocalDateTime fechaModificacion, String rutaCompleta,
+                String extension, String categoria) {
+            super(nombre, tamanoBytes, fechaModificacion, rutaCompleta, extension, categoria);
+            this.nombre = nombre;
+            this.rutaCompleta = rutaCompleta;
+            this.extension = extension;
+        }
+
+        public ArchivoAdapter() {
+            super("irrelevant", 0L, LocalDateTime.now(), "irrelevant", "irrelevant", "OTRO");
+            this.nombre = null;
+            this.rutaCompleta = null;
+            this.extension = null;
+        }
+
+        @Override
+        public String getNombre() {
+            return nombre;
+        }
+
+        @Override
+        public String getRutaCompleta() {
+            return rutaCompleta;
+        }
+
+        @Override
+        public String getExtension() {
+            return extension;
+        }
+
+        public void setNombre(String nombre) {
+            this.nombre = nombre;
+        }
+    }
 }

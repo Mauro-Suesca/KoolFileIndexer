@@ -109,6 +109,15 @@ public class Indexador implements Runnable {
      * Arranca la indexación periódica.
      */
     public synchronized void iniciarIndexacionPeriodica(Path raiz, int batchSize, Duration intervalo) {
+        // Validar parámetros
+        Objects.requireNonNull(raiz, "La ruta base no puede ser null");
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("El tamaño de lote debe ser positivo");
+        }
+        if (intervalo == null || intervalo.isNegative() || intervalo.isZero()) {
+            throw new IllegalArgumentException("El intervalo debe ser positivo");
+        }
+
         System.out.println("[SCHEDULER] Configurando indexación periódica:");
         System.out.println(" - Intervalo: cada " + intervalo.toMinutes() + " minutos");
         System.out.println(" - Tamaño de lote: " + batchSize + " archivos por ciclo");
@@ -251,9 +260,14 @@ public class Indexador implements Runnable {
                     if (procesados.get() >= batchSize) {
                         return FileVisitResult.TERMINATE;
                     }
-                    if (attrs.isRegularFile() && !excluirArchivo(file)) {
-                        procesados.incrementAndGet();
-                        procesarArchivo(file, attrs);
+                    try {
+                        if (attrs.isRegularFile() && !excluirArchivo(file)) {
+                            procesados.incrementAndGet();
+                            procesarArchivo(file, attrs);
+                        }
+                    } catch (Exception e) {
+                        // Capturar excepciones para evitar que falle todo el recorrido
+                        System.err.println("Error al procesar " + file + ": " + e.getMessage());
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -282,7 +296,7 @@ public class Indexador implements Runnable {
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
                     filtroBD, attrs.size(), attrs.size());
             if (rs != null) {
-                try (rs) {
+                try (rs) { // <-- Usar try-with-resources
                     if (rs.next()) {
                         actualizarArchivoExistente(archivoModelo, attrs, rs);
                     } else {
@@ -334,10 +348,13 @@ public class Indexador implements Runnable {
 
             // Si el nombre cambió pero la ruta base es similar, actualizar el nombre
             if (!nuevoNombre.equals(nombreActualEnBD)) {
-                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                ArchivoAdapter archivo = new ArchivoAdapter();
                 archivo.setRutaCompleta(nuevaRutaCompleta);
                 archivo.setNombre(nuevoNombre);
-                archivo.setExtension(rs.getString("ext_extension"));
+                String extension = rs.getString("ext_extension");
+                if (extension != null) {
+                    archivo.setExtension(extension);
+                }
 
                 connector.actualizarNombreArchivo(archivo, nombreActualEnBD);
                 System.out.println("[RENOMBRADO] " + nombreActualEnBD + " -> " + nuevoNombre);
@@ -349,7 +366,10 @@ public class Indexador implements Runnable {
                 koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
                 archivo.setRutaCompleta(nuevaRutaCompleta);
                 archivo.setNombre(nuevoNombre);
-                archivo.setExtension(rs.getString("ext_extension"));
+                String extension = rs.getString("ext_extension");
+                if (extension != null) {
+                    archivo.setExtension(extension);
+                }
 
                 connector.actualizarUbicacionArchivo(archivo, rutaActualEnBD);
                 System.out.println("[MOVIDO] " + rutaActualEnBD + " -> " + nuevaRutaCompleta);
@@ -453,7 +473,7 @@ public class Indexador implements Runnable {
 
             // Monitoreo periódico
             System.out.println("\n=== Iniciando monitor periódico ===");
-            while (ejecutando) {
+            while (ejecutando && !Thread.currentThread().isInterrupted()) {
                 try {
                     // Indexación periódica de HOME
                     Path homePath = Paths.get(System.getProperty("user.home"));
@@ -473,8 +493,14 @@ public class Indexador implements Runnable {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error fatal en el indexador: " + e.getMessage());
-            e.printStackTrace();
+            // Si es una interrupción, propagar
+            if (e instanceof InterruptedException) {
+                System.out.println("Indexador interrumpido");
+                Thread.currentThread().interrupt();
+            } else {
+                System.err.println("Error fatal en el indexador: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -500,7 +526,7 @@ public class Indexador implements Runnable {
         try {
             // Lógica para agregar una palabra clave a un archivo existente
             // 1. Buscar el archivo por su ruta
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            ArchivoAdapter filtro = new ArchivoAdapter();
             filtro.setRutaCompleta(filePath);
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
             if (rs != null) {
@@ -510,10 +536,13 @@ public class Indexador implements Runnable {
                         long archivoId = rs.getLong("id");
 
                         // 3. Asociar la nueva palabra clave al archivo
-                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                        ArchivoAdapter archivo = new ArchivoAdapter();
                         archivo.setRutaCompleta(filePath);
                         archivo.setNombre(rs.getString("arc_nombre"));
-                        archivo.setExtension(rs.getString("ext_extension"));
+                        String extension = rs.getString("ext_extension");
+                        if (extension != null) {
+                            archivo.setExtension(extension);
+                        }
                         connector.asociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
                         System.out.println("[PALABRA CLAVE AGREGADA] " + keyword + " a " + filePath);
                         return true;

@@ -15,6 +15,7 @@ import koolfileindexer.common.protocol.Response;
 import koolfileindexer.common.protocol.v1.SocketServer;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -35,40 +37,14 @@ public class MainIndexadorCLI {
     private static ConectorBasedeDatos connector;
     private static SocketServer socketServer;
     private static Future<?> indexadorFuture;
+    private static volatile boolean running = true; // Añadir variable de control
 
     public static void main(String[] args) {
-        Indexador indexador = null;
         try {
-            // 0) Inicializar y verificar conexión BD
-            connector = ConectorBasedeDatos.obtenerInstancia();
-            verificarConexionBD();
-
-            // 1) Selección de raíces según el modo
-            List<Path> rootsToScan = seleccionarRaices(args);
-
-            // 2) Crear el indexador (ahora sin iniciar)
-            indexador = Indexador.getInstance(
-                    Paths.get("src", "main", "resources", "indexador", "exclusiones.txt").toString(),
-                    rootsToScan, DEFAULT_BATCH, DEFAULT_INTERVAL);
-            mostrarConfiguracion(indexador);
-
-            // 3) Iniciar el servidor de sockets
-            socketServer = SocketServer.createServer(10);
-
-            // 4) Registrar las acciones en el servidor
-            registrarAccionesAPI(socketServer, indexador);
-
-            // 5) Enviar el indexador como tarea al servidor
-            indexadorFuture = socketServer.submit(indexador);
-
-            // 6) Iniciar bucle de aceptación de conexiones
-            System.out.println("Servidor socket iniciado. Esperando conexiones...");
-
-            // Bucle principal
-            while (true) {
-                socketServer.accept();
-            }
-
+            inicializarBaseDeDatos();
+            Indexador indexador = configurarIndexador(args);
+            iniciarServidorSocket(indexador);
+            ejecutarBucleAceptacion();
         } catch (SQLException e) {
             System.err.println("Error de base de datos: " + e.getMessage());
             e.printStackTrace();
@@ -76,24 +52,60 @@ public class MainIndexadorCLI {
             System.err.println("Error fatal: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            // Asegurar limpieza de recursos
-            if (indexador != null) {
-                indexador.detener();
-            }
+            limpiarRecursos();
+        }
+    }
 
-            // Este es el código que necesitas para cerrar correctamente el socket server
-            if (socketServer != null) {
-                try {
-                    System.out.println("Cerrando servidor socket...");
-                    socketServer.close();
-                } catch (IOException e) {
-                    System.err.println("Error al cerrar el servidor socket: " + e.getMessage());
+    private static void inicializarBaseDeDatos() throws SQLException {
+        connector = ConectorBasedeDatos.obtenerInstancia();
+        verificarConexionBD();
+    }
+
+    private static Indexador configurarIndexador(String[] args) {
+        List<Path> rootsToScan = seleccionarRaices(args);
+        Indexador indexador = Indexador.getInstance(
+                Paths.get("src", "main", "resources", "indexador", "exclusiones.txt").toString(),
+                rootsToScan, DEFAULT_BATCH, DEFAULT_INTERVAL);
+        mostrarConfiguracion(indexador);
+        return indexador;
+    }
+
+    private static void iniciarServidorSocket(Indexador indexador) throws IOException {
+        socketServer = SocketServer.createServer(10);
+        registrarAccionesAPI(socketServer, indexador);
+        indexadorFuture = socketServer.submit(indexador);
+        System.out.println("Servidor socket iniciado. Esperando conexiones...");
+    }
+
+    private static void ejecutarBucleAceptacion() {
+        while (running) {
+            try {
+                socketServer.accept();
+            } catch (Exception e) {
+                System.err.println("Error en bucle de aceptación: " + e.getMessage());
+                if (Thread.currentThread().isInterrupted()) {
+                    running = false;
                 }
             }
+        }
+    }
 
-            if (connector != null) {
-                connector.terminarConexion();
+    private static void limpiarRecursos() {
+        if (indexadorFuture != null) {
+            indexadorFuture.cancel(true);
+        }
+
+        if (socketServer != null) {
+            try {
+                System.out.println("Cerrando servidor socket...");
+                socketServer.close();
+            } catch (IOException e) {
+                System.err.println("Error al cerrar el servidor socket: " + e.getMessage());
             }
+        }
+
+        if (connector != null) {
+            connector.terminarConexion();
         }
     }
 
@@ -148,8 +160,19 @@ public class MainIndexadorCLI {
                     return Response.err(new ErrorMessage("Formato incorrecto: se esperan tag y filePath"));
                 }
 
-                String tagName = lines[0].split(": ")[1];
-                String filePath = lines[1].split(": ")[1];
+                String[] tagParts = lines[0].split(":", 2);
+                String[] pathParts = lines[1].split(":", 2);
+
+                if (tagParts.length != 2 || pathParts.length != 2) {
+                    return Response.err(new ErrorMessage("Formato incorrecto: formato esperado 'clave: valor'"));
+                }
+
+                String tagName = tagParts[1].trim();
+                String filePath = pathParts[1].trim();
+
+                if (tagName.isEmpty() || filePath.isEmpty()) {
+                    return Response.err(new ErrorMessage("Tag y filePath no pueden estar vacíos"));
+                }
 
                 boolean success = agregarEtiqueta(filePath, tagName);
                 if (success) {
@@ -278,16 +301,12 @@ public class MainIndexadorCLI {
     private static List<Archivo> buscarArchivos(String[] keywords, String[] tagNames) {
         List<Archivo> resultados = new ArrayList<>();
         try {
-            // CAMBIAR ESTO:
-            // koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
-
-            // POR ESTO:
             ArchivoAdapter filtro = new ArchivoAdapter();
 
             // Si hay palabras clave, intentar usarlas primero como nombre
-            if (keywords != null && keywords.length > 0) {
-                // Usar la primera palabra clave como nombre para búsqueda
-                filtro.setNombre(keywords[0]);
+            if (keywords != null && keywords.length > 0 && keywords[0] != null && !keywords[0].trim().isEmpty()) {
+                // Solo establecer el nombre si no está vacío
+                filtro.setNombre(keywords[0].trim());
 
                 ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
@@ -326,22 +345,23 @@ public class MainIndexadorCLI {
             }
 
             // Elegir el método más apropiado según la cantidad de keywords
-            ResultSet rs;
-            if (keywords != null && keywords.length > 1) {
-                // Con múltiples palabras clave, usar búsqueda flexible (al menos una
-                // coincidencia)
-                rs = connector.buscarArchivosPorFiltroMinimoUnaPalabraClave(filtro, -1, -1);
-            } else {
-                // Con una sola palabra o sin palabras, usar búsqueda exacta
-                rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
-            }
+            try {
+                // Declaración e inicialización en una sola línea usando operador ternario
+                ResultSet rs = (keywords != null && keywords.length > 1)
+                        ? connector.buscarArchivosPorFiltroMinimoUnaPalabraClave(filtro, -1, -1)
+                        : connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
-            if (rs != null) {
-                while (rs.next()) {
-                    Archivo archivo = ArchivoConverter.fromResultSet(rs);
-                    resultados.add(archivo);
+                if (rs != null) {
+                    try (rs) { // Ahora rs es efectivamente final
+                        while (rs.next()) {
+                            Archivo archivo = ArchivoConverter.fromResultSet(rs);
+                            resultados.add(archivo);
+                        }
+                    }
                 }
-                rs.close();
+            } catch (Exception e) {
+                System.err.println("Error al buscar archivos: " + e.getMessage());
+                e.printStackTrace();
             }
         } catch (Exception e) {
             System.err.println("Error al buscar archivos: " + e.getMessage());
@@ -374,9 +394,15 @@ public class MainIndexadorCLI {
     // Implementar el método agregarEtiqueta
     private static boolean agregarEtiqueta(String filePath, String tagName) {
         try {
+            // Verificar que la ruta no es nula ni vacía
+            if (filePath == null || filePath.trim().isEmpty()) {
+                System.err.println("La ruta del archivo no puede estar vacía");
+                return false;
+            }
+
             // Crear un filtro para buscar el archivo por ruta
             ArchivoAdapter filtro = new ArchivoAdapter();
-            filtro.setRutaCompleta(filePath);
+            filtro.setRutaCompleta(filePath.trim());
 
             // Buscar el archivo
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
@@ -390,16 +416,16 @@ public class MainIndexadorCLI {
                         rs.getString("arc_ruta_completa"),
                         rs.getString("ext_extension"),
                         rs.getString("cat_nombre"));
-                rs.close();
+                // rs.close();
 
                 // Asociar la etiqueta al archivo
                 connector.asociarEtiquetaArchivo(archivo, tagName);
                 return true;
             }
 
-            if (rs != null) {
-                rs.close();
-            }
+            // if (rs != null) {
+            // rs.close();
+            // }
         } catch (Exception e) {
             System.err.println("Error al agregar etiqueta: " + e.getMessage());
             e.printStackTrace();
@@ -417,16 +443,33 @@ public class MainIndexadorCLI {
                 return false;
             }
 
+            // Validar ruta del archivo
+            if (filePath == null || filePath.trim().isEmpty()) {
+                System.err.println("La ruta del archivo no puede estar vacía");
+                return false;
+            }
+
+            // CAMBIAR ESTO:
+            // koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            // filtro.setRutaCompleta(filePath);
+
+            // POR ESTO:
+            ArchivoAdapter filtro = new ArchivoAdapter();
+            filtro.setRutaCompleta(filePath.trim());
+
+            // Y MÁS ABAJO, CAMBIAR TAMBIÉN:
+            // koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+
+            // POR ESTO:
+            ArchivoAdapter archivo = new ArchivoAdapter();
+
             // Buscar el archivo por ruta completa
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
-            filtro.setRutaCompleta(filePath);
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null) {
                 try (rs) {
                     if (rs.next()) {
                         // Crear objeto archivo con los datos necesarios para asociar
-                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
                         archivo.setRutaCompleta(filePath);
                         archivo.setNombre(rs.getString("arc_nombre"));
                         archivo.setExtension(rs.getString("ext_extension"));
@@ -453,16 +496,38 @@ public class MainIndexadorCLI {
     // Implementar el método eliminarPalabraClave
     private static boolean eliminarPalabraClave(String filePath, String keyword) {
         try {
+            // Validar parámetros
+            if (keyword == null || keyword.trim().isEmpty()) {
+                System.err.println("La palabra clave no puede estar vacía");
+                return false;
+            }
+
+            if (filePath == null || filePath.trim().isEmpty()) {
+                System.err.println("La ruta del archivo no puede estar vacía");
+                return false;
+            }
+
+            // CAMBIAR ESTO:
+            // koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            // filtro.setRutaCompleta(filePath);
+
+            // POR ESTO:
+            ArchivoAdapter filtro = new ArchivoAdapter();
+            filtro.setRutaCompleta(filePath.trim());
+
+            // Y MÁS ABAJO, CAMBIAR TAMBIÉN:
+            // koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+
+            // POR ESTO:
+            ArchivoAdapter archivo = new ArchivoAdapter();
+
             // Buscar el archivo por ruta completa
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
-            filtro.setRutaCompleta(filePath);
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null) {
                 try (rs) {
                     if (rs.next()) {
                         // Crear objeto archivo con los datos necesarios
-                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
                         archivo.setRutaCompleta(filePath);
                         archivo.setNombre(rs.getString("arc_nombre"));
                         archivo.setExtension(rs.getString("ext_extension"));
@@ -529,5 +594,45 @@ public class MainIndexadorCLI {
             }
         }
         return rootsToScan;
+    }
+
+    private static Optional<ArchivoAdapter> buscarArchivoPorRuta(String filePath) {
+        try {
+            if (filePath == null || filePath.trim().isEmpty()) {
+                System.err.println("La ruta del archivo no puede estar vacía");
+                return Optional.empty();
+            }
+
+            ArchivoAdapter filtro = new ArchivoAdapter();
+            filtro.setRutaCompleta(filePath.trim());
+
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        ArchivoAdapter archivo = new ArchivoAdapter(
+                                rs.getString("arc_nombre"),
+                                rs.getLong("arc_tamano_bytes"),
+                                rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime(),
+                                rs.getString("arc_ruta_completa"),
+                                rs.getString("ext_extension"),
+                                rs.getString("cat_nombre"));
+                        return Optional.of(archivo);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al buscar archivo: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
+
+    private static ResultSet obtenerResultSetSegunKeywords(ArchivoAdapter filtro, String[] keywords)
+            throws SQLException {
+        return (keywords != null && keywords.length > 1)
+                ? connector.buscarArchivosPorFiltroMinimoUnaPalabraClave(filtro, -1, -1)
+                : connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
     }
 }
