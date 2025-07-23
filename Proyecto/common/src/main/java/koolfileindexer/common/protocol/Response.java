@@ -32,11 +32,11 @@ public class Response implements IntoStr {
     }
 
     public static Response err(String data) {
-        return new Response(ResultEnum.Ok, data);
+        return new Response(ResultEnum.Err, data);
     }
 
     public static Response err(IntoStr data) {
-        return new Response(ResultEnum.Ok, data.intoString());
+        return new Response(ResultEnum.Err, data.intoString());
     }
 
     public boolean isError() {

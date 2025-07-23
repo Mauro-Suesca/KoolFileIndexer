@@ -1,10 +1,17 @@
 package koolfileindexer.db;
 
+import java.util.Objects; // Añadir esta importación
+
 public class Categoria {
     private final String nombre;
 
     public Categoria(String nombre) {
-        this.nombre = nombre;
+        Objects.requireNonNull(nombre, "nombre no puede ser null");
+        String limpio = nombre.trim();
+        if (limpio.isEmpty()) {
+            throw new IllegalArgumentException("nombre no puede estar vacío");
+        }
+        this.nombre = limpio;
     }
 
     public String getNombre() {

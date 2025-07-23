@@ -17,21 +17,21 @@ public class ConectorBasedeDatos {
     private final String CONTRASENA = "koolpass";
     private Connection conexion;
 
-    public static ConectorBasedeDatos obtenerInstancia(){
+    public static ConectorBasedeDatos obtenerInstancia() {
         ConectorBasedeDatos resultado = instancia;
         
-        if(resultado != null){
+        if (resultado != null) {
             return resultado;
         }
-        synchronized(ConectorBasedeDatos.class){
-            if(instancia == null){
+        synchronized(ConectorBasedeDatos.class) {
+            if (instancia == null) {
                 instancia = new ConectorBasedeDatos();
             }
             return instancia;
         }
     }
 
-    public synchronized Connection obtenerConexion() throws SQLException{
+    public synchronized Connection obtenerConexion() throws SQLException {
         try {
             if (conexion == null || conexion.isClosed()) {
                 conexion = DriverManager.getConnection(
@@ -57,10 +57,12 @@ public class ConectorBasedeDatos {
         }
     }
 
-    public void crearArchivo(Archivo nuevoArchivo) throws SQLException{
+    public void crearArchivo(Archivo nuevoArchivo) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -86,10 +88,12 @@ public class ConectorBasedeDatos {
     public void asociarPalabraClaveArchivo(
         Archivo archivoParaModificar,
         String nuevaPalabraClave
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_asociar_palabra_clave_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -108,10 +112,12 @@ public class ConectorBasedeDatos {
     public void asociarEtiquetaArchivo(
         Archivo archivoParaModificar,
         String nuevaEtiqueta
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_asociar_etiqueta_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -131,14 +137,14 @@ public class ConectorBasedeDatos {
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
-    ) throws SQLException{
+    ) throws SQLException {
 
         boolean esPrimerComando = true;
         String consultaSQLDinamica = "SELECT * FROM ";
 
         if (archivoFiltro.getPalabrasClave() != null) {
             Iterator<String> iteradorPalabrasClave = archivoFiltro.getPalabrasClave().iterator();
-            while(iteradorPalabrasClave.hasNext()){
+            while (iteradorPalabrasClave.hasNext()) {
                 consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
                 consultaSQLDinamica +=
                     "sp_buscar_archivos_con_una_palabra_clave_dada (?) ";
@@ -159,7 +165,7 @@ public class ConectorBasedeDatos {
 
         if (archivoFiltro.getPalabrasClave() != null) {
             Iterator<String> iteradorPalabrasClave = archivoFiltro.getPalabrasClave().iterator();
-            while(iteradorPalabrasClave.hasNext()){
+            while (iteradorPalabrasClave.hasNext()) {
                 sentenciaEjecutable.setString(
                     indiceParametro++,
                     iteradorPalabrasClave.next()
@@ -180,7 +186,7 @@ public class ConectorBasedeDatos {
         Archivo archivoFiltro,
         long tamanoMinimo,
         long tamanoMaximo
-    ) throws SQLException{
+    ) throws SQLException {
 
         boolean esPrimerComando = true;
         String consultaSQLDinamica = "SELECT * FROM ";
@@ -228,7 +234,7 @@ public class ConectorBasedeDatos {
         long tamanoMaximo,
         boolean esPrimerComando,
         String consultaSQLDinamica
-    ) throws SQLException{
+    ) throws SQLException {
 
         if (archivoFiltro.getExtension() != null) {
             consultaSQLDinamica += esPrimerComando ? "" : "INTERSECT SELECT * FROM ";
@@ -265,6 +271,8 @@ public class ConectorBasedeDatos {
             consultaSQLDinamica += "sp_buscar_archivos_segun_nombre (?) ";
             esPrimerComando = false;
         }
+
+        obtenerConexion();
         
         return conexion.prepareCall(
             consultaSQLDinamica,
@@ -279,7 +287,7 @@ public class ConectorBasedeDatos {
         long tamanoMaximo,
         CallableStatement sentenciaEjecutable,
         int indiceParametro
-    ) throws SQLException{
+    ) throws SQLException {
 
         if (archivoFiltro.getExtension() != null) {
             sentenciaEjecutable.setString(
@@ -322,11 +330,13 @@ public class ConectorBasedeDatos {
     public void actualizarUbicacionConNombreNuevo(
         String viejaUbicacion,
         String nuevaUbicacion
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_nombre_ubicacion (?, ?)}";
 
+        obtenerConexion();
+        
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
             ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -342,10 +352,12 @@ public class ConectorBasedeDatos {
     public void actualizarUbicacionArchivo(
         Archivo archivoParaModificar,
         String viejaUbicacion
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_archivo_con_nueva_ubicacion (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -364,10 +376,12 @@ public class ConectorBasedeDatos {
     public void actualizarNombreArchivo(
         Archivo archivoParaModificar,
         String viejo_nombre
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -385,10 +399,12 @@ public class ConectorBasedeDatos {
 
     public void actualizarTamanoFechaModificacionArchivo(
         Archivo archivoParaModificar
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -411,10 +427,12 @@ public class ConectorBasedeDatos {
 
     public void actualizarCategoriaArchivo(
         Archivo archivoParaModificar
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -433,10 +451,12 @@ public class ConectorBasedeDatos {
     public void desasociarPalabraClaveArchivo(
         Archivo archivoParaModificar,
         String palabraClaveParaEliminar
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_desasociar_palabra_clave_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -455,10 +475,12 @@ public class ConectorBasedeDatos {
     public void desasociarEtiquetaArchivo(
         Archivo archivoParaModificar,
         String etiquetaParaEliminar
-    ) throws SQLException{
+    ) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_desasociar_etiqueta_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -474,10 +496,12 @@ public class ConectorBasedeDatos {
         sentenciaEjecutable.execute();
     }
 
-    public void eliminarArchivo(Archivo archivoParaEliminar) throws SQLException{
+    public void eliminarArchivo(Archivo archivoParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_archivo (?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -493,10 +517,12 @@ public class ConectorBasedeDatos {
 
     }
 
-    public void eliminarArchivosEnUbicacion(String ubicacionParaEliminar) throws SQLException{
+    public void eliminarArchivosEnUbicacion(String ubicacionParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_archivos_en_ubicacion (?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,
@@ -509,10 +535,12 @@ public class ConectorBasedeDatos {
         sentenciaEjecutable.execute();
     }
 
-    public void eliminarEtiqueta(String etiquetaParaEliminar) throws SQLException{
+    public void eliminarEtiqueta(String etiquetaParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql =
             "{CALL sp_eliminar_etiqueta (?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
             stringComandoSql,

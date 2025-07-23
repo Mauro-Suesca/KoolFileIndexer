@@ -3,29 +3,32 @@ package koolfileindexer.logica;
 import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
+<<<<<<< HEAD
 import koolfileindexer.logica.ArchivoConverter; // Añadir esta importación
 import koolfileindexer.logica.ArchivoAdapter; // Importar ArchivoAdapter desde el paquete correcto
 
 import java.io.File;
 import java.io.IOException;
+=======
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.Duration; // Añadir esta importación
+import java.io.IOException;
 
 /**
  * Indexador recorre carpetas por lotes, aplica exclusiones
  * y delega persistencia en BD vía ConectorBasedeDatos.
  */
-public class Indexador {
+public class Indexador implements Runnable {
     private static final AtomicReference<Indexador> INSTANCIA = new AtomicReference<>();
     private final ConectorBasedeDatos connector;
 
@@ -39,14 +42,75 @@ public class Indexador {
     private Duration intervalo = Duration.ofMinutes(5);
     private int batchSize = 100;
 
-    private Indexador(String archivoExclusiones) {
+    // Nuevos campos para controlar el ciclo de vida
+    private final List<Path> raicesAIndexar;
+    private final int tamanoLote;
+    private final Duration intervaloEjecucion;
+    private volatile boolean ejecutando = true;
+
+    // Constructor existente modificado para recibir parámetros de ejecución
+    private Indexador(String archivoExclusiones, List<Path> raices, int tamanoLote, Duration intervalo) {
         this.connector = ConectorBasedeDatos.obtenerInstancia();
-        cargarExclusiones(archivoExclusiones);
+        this.raicesAIndexar = raices;
+        this.tamanoLote = tamanoLote;
+        this.intervaloEjecucion = intervalo;
+
+        // Primero intentar con el archivo en $HOME/.config
+        String userHome = System.getProperty("user.home");
+        Path configPath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt");
+
+        if (Files.exists(configPath)) {
+            cargarExclusiones(configPath.toString());
+            System.out.println("[CONFIG] Cargadas exclusiones del usuario desde: " + configPath);
+        } else {
+            // Crear directorios y archivo si no existen
+            try {
+                Files.createDirectories(configPath.getParent());
+                System.out.println("[CONFIG] Creado directorio de configuración en: " + configPath.getParent());
+
+                // Si hay un archivo de exclusiones del proyecto, copiarlo al directorio del
+                // usuario
+                if (archivoExclusiones != null && !archivoExclusiones.isBlank()) {
+                    Path proyectoExclusiones = Paths.get(archivoExclusiones);
+                    if (Files.exists(proyectoExclusiones)) {
+                        Files.copy(proyectoExclusiones, configPath);
+                        System.out.println("[CONFIG] Copiado archivo de exclusiones del proyecto a: " + configPath);
+                        cargarExclusiones(configPath.toString());
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error creando configuración de usuario: " + e.getMessage());
+            }
+        }
+
+        // Si no se cargaron exclusiones, intentar con el archivo pasado como parámetro
+        if (rutasExcluidas.isEmpty() && archivoExclusiones != null && !archivoExclusiones.isBlank()) {
+            cargarExclusiones(archivoExclusiones);
+            System.out.println("[CONFIG] Cargadas exclusiones del proyecto desde: " + archivoExclusiones);
+        }
     }
 
+    // Método de fábrica modificado
+    public static Indexador getInstance(String archivoExclusiones, List<Path> raices, int tamanoLote,
+            Duration intervalo) {
+        Indexador instance = INSTANCIA.get();
+        if (instance == null) {
+            instance = new Indexador(archivoExclusiones, raices, tamanoLote, intervalo);
+            if (INSTANCIA.compareAndSet(null, instance)) {
+                return instance;
+            }
+            return INSTANCIA.get();
+        }
+        return instance;
+    }
+
+    /**
+     * Método de fábrica sobrecargado para mantener compatibilidad con tests
+     */
     public static Indexador getInstance(String archivoExclusiones) {
-        INSTANCIA.compareAndSet(null, new Indexador(archivoExclusiones));
-        return INSTANCIA.get();
+        Path homePath = Paths.get(System.getProperty("user.home"));
+        List<Path> raices = List.of(homePath);
+        return getInstance(archivoExclusiones, raices, 100, Duration.ofMinutes(5));
     }
 
     /**
@@ -77,7 +141,11 @@ public class Indexador {
         }, 0, intervalo.toMinutes(), TimeUnit.MINUTES);
     }
 
-    private void cargarExclusiones(String archivoExclusiones) {
+    /**
+     * Carga las exclusiones desde un archivo de texto.
+     * Cada línea representa una ruta a excluir.
+     */
+    public void cargarExclusiones(String archivoExclusiones) {
         if (archivoExclusiones == null || archivoExclusiones.isBlank())
             return;
         Path path = Paths.get(archivoExclusiones);
@@ -85,6 +153,9 @@ public class Indexador {
             return;
 
         try {
+            // Limpiar exclusiones anteriores
+            rutasExcluidas.clear();
+
             Files.readAllLines(path).stream()
                     .map(String::trim)
                     .filter(s -> !s.isEmpty() && !s.startsWith("#"))
@@ -92,6 +163,8 @@ public class Indexador {
                     .map(Path::toAbsolutePath)
                     .map(Path::normalize)
                     .forEach(rutasExcluidas::add);
+
+            System.out.println("[CONFIG] Cargadas " + rutasExcluidas.size() + " exclusiones de " + path);
         } catch (IOException e) {
             System.err.println("Error leyendo exclusiones: " + e.getMessage());
         }
@@ -101,6 +174,7 @@ public class Indexador {
         return Collections.unmodifiableSet(rutasExcluidas);
     }
 
+    // Verificar que este método siga conteniendo estas validaciones
     private boolean excluirArchivo(Path p) {
         Path norm = p.toAbsolutePath().normalize();
 
@@ -240,6 +314,57 @@ public class Indexador {
             scheduler = null;
             System.out.println("[SCHEDULER] Detenido correctamente");
         }
+
+        // Cerrar conexión si es necesario
+        if (connector != null) {
+            try {
+                connector.terminarConexion();
+                System.out.println("[DB] Conexión cerrada correctamente");
+            } catch (Exception e) {
+                System.err.println("[DB] Error al cerrar conexión: " + e.getMessage());
+            }
+        }
+    }
+
+    // Añadir este método para detectar cambios en archivos
+    private void detectarCambiosArchivo(Path nuevaRuta, BasicFileAttributes attrs, ResultSet rs) throws SQLException {
+        try {
+            // Usar el enfoque de alternativas para obtener nombres de columnas
+            String nombreActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
+                    new String[] { "arc_nombre", "nombre", "name" });
+
+            String rutaActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
+                    new String[] { "arc_ruta_completa", "ruta_completa", "path" });
+
+            // El resto del método sigue igual
+            String nuevoNombre = nuevaRuta.getFileName().toString();
+            String nuevaRutaCompleta = nuevaRuta.toAbsolutePath().normalize().toString();
+
+            // Si el nombre cambió pero la ruta base es similar, actualizar el nombre
+            if (!nuevoNombre.equals(nombreActualEnBD)) {
+                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                archivo.setRutaCompleta(nuevaRutaCompleta);
+                archivo.setNombre(nuevoNombre);
+                archivo.setExtension(rs.getString("ext_extension"));
+
+                connector.actualizarNombreArchivo(archivo, nombreActualEnBD);
+                System.out.println("[RENOMBRADO] " + nombreActualEnBD + " -> " + nuevoNombre);
+            }
+
+            // Si la ruta cambió pero el nombre es el mismo, actualizar la ubicación
+            Path rutaActualPath = Paths.get(rutaActualEnBD);
+            if (!rutaActualPath.getParent().equals(nuevaRuta.getParent())) {
+                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                archivo.setRutaCompleta(nuevaRutaCompleta);
+                archivo.setNombre(nuevoNombre);
+                archivo.setExtension(rs.getString("ext_extension"));
+
+                connector.actualizarUbicacionArchivo(archivo, rutaActualEnBD);
+                System.out.println("[MOVIDO] " + rutaActualEnBD + " -> " + nuevaRutaCompleta);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al detectar cambios en archivo: " + e.getMessage());
+        }
     }
 
     private void actualizarArchivoExistente(Archivo archivoModelo, BasicFileAttributes attrs, ResultSet rs)
@@ -250,7 +375,10 @@ public class Indexador {
                 LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault()));
 
         try {
-            // Usar Archivo de db en lugar de ArchivoBD
+            // Detectar y manejar cambios de nombre o ubicación
+            detectarCambiosArchivo(Paths.get(archivoModelo.getRutaCompleta()), attrs, rs);
+
+            // Actualizar el resto de información
             koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
             connector.actualizarTamanoFechaModificacionArchivo(archivoDb);
             connector.actualizarCategoriaArchivo(archivoDb);
@@ -262,10 +390,27 @@ public class Indexador {
 
     private void insertarNuevoArchivo(Archivo archivoModelo, BasicFileAttributes attrs) throws Exception {
         try {
-            // Usar Archivo de db en lugar de ArchivoBD
             koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
             connector.crearArchivo(archivoDb);
-            System.out.println("[INSERTADO]  " + archivoModelo.getRutaCompleta());
+
+            // Añadir palabras clave básicas (nombre sin extensión, extensión)
+            String nombreSinExt = archivoModelo.getNombre();
+            int dotIndex = nombreSinExt.lastIndexOf('.');
+            if (dotIndex > 0) {
+                nombreSinExt = nombreSinExt.substring(0, dotIndex);
+            }
+
+            // Asociar el nombre como palabra clave si es válido
+            if (nombreSinExt.length() > 0) {
+                connector.asociarPalabraClaveArchivo(archivoDb, nombreSinExt.toLowerCase());
+            }
+
+            // La extensión como palabra clave
+            if (!archivoModelo.getExtension().isEmpty()) {
+                connector.asociarPalabraClaveArchivo(archivoDb, archivoModelo.getExtension().toLowerCase());
+            }
+
+            System.out.println("[INSERTADO] " + archivoModelo.getRutaCompleta());
 
             // Buscar usando el mismo archivoDb para la consulta
             ResultSet nuevoRs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
@@ -302,6 +447,7 @@ public class Indexador {
         return a;
     }
 
+<<<<<<< HEAD
     public void limpiarArchivosNoExistentes() {
         System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
         try {
@@ -309,10 +455,113 @@ public class Indexador {
             ArchivoAdapter filtro = new ArchivoAdapter();
             // No necesitamos establecer ningún valor específico ya que getEtiquetas()
             // devolverá null
+=======
+    // Método run que ejecuta toda la lógica del indexador
+    @Override
+    public void run() {
+        try {
+            // Indexación inicial de todas las raíces
+            System.out.println("\n=== Iniciando indexación inicial ===");
+            for (Path raiz : raicesAIndexar) {
+                System.out.println("\n→ Indexando (batch=" + tamanoLote + "): " + raiz);
+                recorrerDirectorio(raiz, tamanoLote);
+            }
+            System.out.println("\n=== Indexación inicial completada ===");
+
+            // Monitoreo periódico
+            System.out.println("\n=== Iniciando monitor periódico ===");
+            while (ejecutando) {
+                try {
+                    // Indexación periódica de HOME
+                    Path homePath = Paths.get(System.getProperty("user.home"));
+                    recorrerDirectorio(homePath, tamanoLote);
+
+                    // Añadir limpieza periódica
+                    limpiarArchivosNoExistentes();
+
+                    // Esperar hasta el próximo intervalo
+                    Thread.sleep(intervaloEjecucion.toMillis());
+                } catch (InterruptedException e) {
+                    System.out.println("Indexador interrumpido durante la espera");
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    System.err.println("Error en ciclo de indexación: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fatal en el indexador: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Método para detener el indexador
+    public void detener() {
+        this.ejecutando = false;
+        if (this.scheduler != null) {
+            this.scheduler.shutdown();
+        }
+    }
+
+    public boolean agregarPalabraClave(String filePath, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            System.err.println("La palabra clave no puede estar vacía");
+            return false;
+        }
+
+        if (!koolfileindexer.modelo.ValidadorEntrada.esPalabraClaveValida(keyword)) {
+            System.err.println("Palabra clave inválida: " + keyword);
+            return false;
+        }
+
+        try {
+            // Lógica para agregar una palabra clave a un archivo existente
+            // 1. Buscar el archivo por su ruta
+            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            filtro.setRutaCompleta(filePath);
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        // 2. Obtener el ID del archivo
+                        long archivoId = rs.getLong("id");
+
+                        // 3. Asociar la nueva palabra clave al archivo
+                        koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                        archivo.setRutaCompleta(filePath);
+                        archivo.setNombre(rs.getString("arc_nombre"));
+                        archivo.setExtension(rs.getString("ext_extension"));
+                        connector.asociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
+                        System.out.println("[PALABRA CLAVE AGREGADA] " + keyword + " a " + filePath);
+                        return true;
+                    } else {
+                        System.err.println("Archivo no encontrado: " + filePath);
+                        return false;
+                    }
+                }
+            } else {
+                System.err.println("Error al buscar el archivo en la base de datos");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error al agregar palabra clave: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Añadir este método a la clase Indexador
+    public void limpiarArchivosNoExistentes() {
+        System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
+        try {
+            // Usar ArchivoAdapter en lugar de Archivo normal
+            ArchivoAdapter filtro = new ArchivoAdapter();
+            filtro.setNombre("%"); // Comodín SQL para buscar cualquier nombre
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null) {
+<<<<<<< HEAD
                 try (rs) {
                     List<Long> idsExistentes = new ArrayList<>();
                     while (rs.next()) {
@@ -327,6 +576,41 @@ public class Indexador {
             }
         } catch (SQLException sqlEx) {
             System.err.println("Error en limpieza de archivos: " + sqlEx.getMessage());
+=======
+                // El resto del código sigue igual
+                int eliminados = 0;
+                try (rs) {
+                    while (rs.next()) {
+                        String rutaCompleta = rs.getString("arc_ruta_completa");
+                        Path path = Paths.get(rutaCompleta);
+
+                        // Verificar si el archivo ya no existe
+                        if (!Files.exists(path)) {
+                            koolfileindexer.db.Archivo archivoDb = new koolfileindexer.db.Archivo(
+                                    rs.getString("arc_nombre"),
+                                    0, // El tamaño no es relevante para eliminar
+                                    LocalDateTime.now(), // La fecha no es relevante para eliminar
+                                    rutaCompleta,
+                                    rs.getString("ext_extension"),
+                                    rs.getString("cat_nombre") // Obtener la categoría del resultset
+                            );
+
+                            // Eliminar el archivo de la BD
+                            connector.eliminarArchivo(archivoDb);
+                            eliminados++;
+                            System.out.println("[ELIMINADO] " + rutaCompleta + " (ya no existe en el sistema)");
+                        }
+                    }
+                }
+                System.out.println("[LIMPIEZA] Total de archivos eliminados: " + eliminados);
+            }
+        } catch (SQLException sqlEx) {
+            System.err.println("Error de base de datos durante la limpieza: " + sqlEx.getMessage());
+            sqlEx.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Error inesperado durante la limpieza: " + e.getMessage());
+            e.printStackTrace();
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
         }
     }
 }

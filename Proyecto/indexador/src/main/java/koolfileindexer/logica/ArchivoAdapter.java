@@ -1,10 +1,14 @@
 package koolfileindexer.logica;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 import java.util.List;
 import koolfileindexer.db.Etiqueta;
 
 /**
+<<<<<<< HEAD
  * Adaptador para evitar IndexOutOfBoundsException en ConectorBasedeDatos
  * cuando se trabaja con listas de etiquetas vacías.
  */
@@ -39,11 +43,29 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
 
     /**
      * Sobrescribe getEtiquetas para retornar null en vez de una lista vacía
+=======
+ * Adaptador para evitar el problema de IndexOutOfBoundsException al usar etiquetas vacías.
+ * Esta clase extiende Archivo pero sobrescribe getEtiquetas() para devolver null en vez de una lista vacía.
+ */
+public class ArchivoAdapter extends koolfileindexer.db.Archivo {
+    
+    /**
+     * Constructor por defecto para búsquedas seguras.
+     */
+    public ArchivoAdapter() {
+        super();
+    }
+    
+    /**
+     * Sobrescribe getEtiquetas para devolver null en vez de una lista vacía.
+     * Esto previene el IndexOutOfBoundsException en ConectorBasedeDatos.ejecutarConsultaSQLParaBuscarArchivos()
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
      */
     @Override
     public List<Etiqueta> getEtiquetas() {
         return null;
     }
+<<<<<<< HEAD
 
     /**
      * Sobrescribe getNombre para usar nuestro propio valor
@@ -89,4 +111,6 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
     public void setExtension(String extension) {
         this.extension = extension;
     }
+=======
+>>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 }

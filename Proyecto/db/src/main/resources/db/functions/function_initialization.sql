@@ -403,6 +403,7 @@ DECLARE
   id_categoria INT;
 BEGIN 
   PERFORM sp_crear_extension(extension_archivo);
+  PERFORM sp_crear_categoria(nueva_categoria);
 
   SELECT ext_id INTO id_extension
   FROM Extension WHERE ext_extension = extension_archivo; 
@@ -445,6 +446,24 @@ $$ LANGUAGE plpgsql
 
 REVOKE ALL ON FUNCTION public.sp_crear_extension(VARCHAR) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sp_crear_extension(VARCHAR) TO kool_user;
+
+
+DROP FUNCTION IF EXISTS sp_crear_categoria(VARCHAR);
+
+CREATE OR REPLACE FUNCTION sp_crear_categoria(nombre_categoria VARCHAR)
+RETURNS VOID AS $$
+BEGIN 
+  INSERT INTO Categoria (cat_nombre)
+  SELECT nombre_categoria
+  WHERE NOT EXISTS (
+    SELECT 1 FROM Categoria WHERE cat_nombre = nombre_categoria
+  );
+END;
+$$ LANGUAGE plpgsql
+  SECURITY DEFINER;
+
+REVOKE ALL ON FUNCTION public.sp_crear_categoria(VARCHAR) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.sp_crear_categoria(VARCHAR) TO kool_user;
 
 
 DROP FUNCTION IF EXISTS sp_actualizar_nombre_archivo(VARCHAR, VARCHAR, VARCHAR, VARCHAR);

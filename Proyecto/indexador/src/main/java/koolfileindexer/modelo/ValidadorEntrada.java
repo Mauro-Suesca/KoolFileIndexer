@@ -1,5 +1,6 @@
 package koolfileindexer.modelo;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -17,11 +18,17 @@ public class ValidadorEntrada {
     /** Letras, dígitos, guiones/guion bajo, sin espacios. */
     private static final Pattern PATRON_PALABRA = Pattern.compile("^[a-z0-9_\\-]+$");
 
-    /** Normaliza (trim + toLowerCase) o devuelve empty si input == null. */
-    private static Optional<String> normalize(String input) {
-        if (input == null)
-            return Optional.empty();
-        return Optional.of(input.trim().toLowerCase());
+    /** Caracteres inválidos en nombres de archivo. */
+    private static final Pattern INVALID_FILENAME_CHARS_PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
+
+    /**
+     * Normaliza un string: trim + toLowerCase.
+     * 
+     * @param input String a normalizar (puede ser null)
+     * @return String normalizado, o null si el input era null
+     */
+    public static String normalizar(String input) {
+        return input == null ? null : input.trim().toLowerCase();
     }
 
     /**
@@ -30,10 +37,18 @@ public class ValidadorEntrada {
      * — Longitud entre MIN y MAX (tras trim).
      */
     public static boolean esNombreArchivoValido(String nombre) {
-        return Optional.ofNullable(nombre)
-                .map(String::trim)
-                .filter(s -> s.length() >= MIN && s.length() <= MAX)
-                .isPresent();
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return false;
+        }
+
+        // Verificar longitud
+        String trimmed = nombre.trim();
+        if (trimmed.length() < MIN || trimmed.length() > MAX) {
+            return false;
+        }
+
+        // Verificar caracteres inválidos en nombres de archivo
+        return !INVALID_FILENAME_CHARS_PATTERN.matcher(trimmed).find();
     }
 
     /**
@@ -55,5 +70,29 @@ public class ValidadorEntrada {
                 .filter(s -> s.length() >= MIN && s.length() <= MAX)
                 .filter(s -> PATRON_PALABRA.matcher(s).matches())
                 .isPresent();
+    }
+
+    /**
+     * Normaliza un string y lo devuelve como Optional.
+     * 
+     * @param input String a normalizar (puede ser null)
+     * @return Optional con el string normalizado, o empty si el input era null o
+     *         vacío
+     */
+    private static Optional<String> normalize(String input) {
+        String normalizado = normalizar(input);
+        return normalizado == null || normalizado.isEmpty() ? Optional.empty() : Optional.of(normalizado);
+    }
+
+    // Añadir método de Validator
+    public static String validarNombreCategoria(String nombre) {
+        Objects.requireNonNull(nombre, "Nombre de categoría no puede ser null");
+        String limpio = nombre.trim();
+        if (limpio.length() < MIN || limpio.length() > MAX) {
+            throw new IllegalArgumentException(
+                    String.format("Categoría debe tener %d–%d caracteres (recibidos %d): '%s'",
+                            MIN, MAX, limpio.length(), limpio));
+        }
+        return limpio;
     }
 }

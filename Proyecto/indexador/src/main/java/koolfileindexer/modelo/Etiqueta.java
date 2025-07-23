@@ -17,6 +17,9 @@ public class Etiqueta {
         if (normalizado.isEmpty()) {
             throw new IllegalArgumentException("nombre no puede estar vacío");
         }
+        if (normalizado.length() > 50) {
+            throw new IllegalArgumentException("nombre no puede exceder 50 caracteres");
+        }
         if (!esNombreValido(normalizado)) {
             throw new IllegalArgumentException("nombre contiene caracteres inválidos");
         }
@@ -24,7 +27,8 @@ public class Etiqueta {
     }
 
     private static boolean esNombreValido(String nombre) {
-        return nombre.matches("[a-z0-9_-]+");
+        // Permitir letras, dígitos, guiones, guiones bajos y espacios simples
+        return nombre.matches("[a-z0-9_\\-]+(\\s[a-z0-9_\\-]+)*");
     }
 
     /**

@@ -7,13 +7,20 @@ public class Etiqueta {
     private final koolfileindexer.modelo.Etiqueta modelo;
 
     public Etiqueta(String nombre) {
-        this.nombre = nombre;
+        // Validación de null
+        Objects.requireNonNull(nombre, "nombre no puede ser null");
+
         try {
-            // Intenta crear un objeto Etiqueta del modelo
-            this.modelo = koolfileindexer.modelo.Etiqueta.crear(nombre);
-        } catch (Exception e) {
-            // Si falla, dejamos modelo como null
-            throw new IllegalArgumentException("Nombre de etiqueta inválido: " + nombre);
+            // Crear primero el modelo (que hace su propia validación)
+            koolfileindexer.modelo.Etiqueta modeloCreado = koolfileindexer.modelo.Etiqueta.crear(nombre);
+
+            // Usar el nombre normalizado que devuelve el modelo
+            // para garantizar 100% de consistencia
+            this.nombre = modeloCreado.getNombre();
+            this.modelo = modeloCreado;
+        } catch (IllegalArgumentException ex) {
+            // Captura específica de IllegalArgumentException
+            throw new IllegalArgumentException("Nombre de etiqueta inválido: " + nombre, ex);
         }
     }
 

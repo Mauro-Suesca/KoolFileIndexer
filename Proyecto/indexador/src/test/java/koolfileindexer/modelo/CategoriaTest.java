@@ -22,4 +22,16 @@ class CategoriaTest {
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
         assertEquals(Categoria.OTRO, Categoria.clasificar(desconocido));
     }
+
+    @Test
+    void clasificar_reconoceArchivosComprimidos() {
+        // Verificar que se reconocen los tipos de archivos comprimidos
+        Archivo zip = new Archivo("archivo.zip", "/tmp/archivo.zip", "zip", 1000,
+                java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+        Archivo rar = new Archivo("archivo.rar", "/tmp/archivo.rar", "rar", 1000,
+                java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+
+        assertEquals(Categoria.COMPRIMIDO, Categoria.clasificar(zip));
+        assertEquals(Categoria.COMPRIMIDO, Categoria.clasificar(rar));
+    }
 }

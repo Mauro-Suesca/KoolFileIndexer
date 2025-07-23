@@ -42,6 +42,13 @@ public enum Categoria {
         extensiones.put("mp4", VIDEO);
         extensiones.put("avi", VIDEO);
         extensiones.put("mkv", VIDEO);
+
+        // Agregar las extensiones para COMPRIMIDO
+        extensiones.put("zip", COMPRIMIDO);
+        extensiones.put("rar", COMPRIMIDO);
+        extensiones.put("7z", COMPRIMIDO);
+        extensiones.put("tar", COMPRIMIDO);
+        extensiones.put("gz", COMPRIMIDO);
     }
 
     /** Clasificación “oficial” usada desde Archivo. Sólo por extensión. */

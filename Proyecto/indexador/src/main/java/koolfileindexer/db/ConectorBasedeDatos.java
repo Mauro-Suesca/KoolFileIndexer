@@ -59,6 +59,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_crear_archivo(?, ?, ?, ?, ?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -84,6 +86,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_asociar_palabra_clave_archivo (?, ?, ?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -102,6 +106,8 @@ public class ConectorBasedeDatos {
             String nuevaEtiqueta) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_asociar_etiqueta_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
@@ -238,6 +244,8 @@ public class ConectorBasedeDatos {
             esPrimerComando = false;
         }
 
+        obtenerConexion();
+
         return conexion.prepareCall(
                 consultaSQLDinamica,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -290,6 +298,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_actualizar_nombre_ubicacion (?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -306,6 +316,8 @@ public class ConectorBasedeDatos {
             String viejaUbicacion) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_actualizar_archivo_con_nueva_ubicacion (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
@@ -326,6 +338,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_actualizar_nombre_archivo (?, ?, ?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -343,6 +357,8 @@ public class ConectorBasedeDatos {
             Archivo archivoParaModificar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_actualizar_tamano_fecha_modificacion_archivo (?, ?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
@@ -366,6 +382,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_actualizar_categoria_archivo (?, ?, ?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -384,6 +402,8 @@ public class ConectorBasedeDatos {
             String palabraClaveParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_desasociar_palabra_clave_archivo (?, ?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
@@ -404,6 +424,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_desasociar_etiqueta_archivo (?, ?, ?, ?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -420,6 +442,8 @@ public class ConectorBasedeDatos {
     public void eliminarArchivo(Archivo archivoParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_eliminar_archivo (?, ?, ?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
@@ -438,6 +462,8 @@ public class ConectorBasedeDatos {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_eliminar_archivos_en_ubicacion (?)}";
 
+        obtenerConexion();
+
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
                 ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -451,6 +477,8 @@ public class ConectorBasedeDatos {
     public void eliminarEtiqueta(String etiquetaParaEliminar) throws SQLException {
         CallableStatement sentenciaEjecutable = null;
         final String stringComandoSql = "{CALL sp_eliminar_etiqueta (?)}";
+
+        obtenerConexion();
 
         sentenciaEjecutable = conexion.prepareCall(
                 stringComandoSql,
