@@ -536,21 +536,11 @@ public class Indexador implements Runnable {
     public void limpiarArchivosNoExistentes() {
         System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
         try {
-            // En lugar de usar buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo
-            // podemos usar un enfoque alternativo:
-
-            // Opción 1: Consulta directa por nombre de archivo
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            // Usar ArchivoAdapter en lugar de Archivo normal
+            ArchivoAdapter filtro = new ArchivoAdapter();
             filtro.setNombre("%"); // Comodín SQL para buscar cualquier nombre
-            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
-            // O Opción 2: Utilizar la clase ArchivoAdapter que escribimos a continuación
-            /*
-             * ArchivoAdapter filtro = new ArchivoAdapter();
-             * ResultSet rs =
-             * connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1,
-             * -1);
-             */
+            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null) {
                 // El resto del código sigue igual
