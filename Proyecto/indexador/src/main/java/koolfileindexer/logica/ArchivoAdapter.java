@@ -76,10 +76,18 @@ public class ArchivoAdapter extends koolfileindexer.db.Archivo {
         return this.extension; // Devuelve null si extension es null
     }
 
+    /**
+     * Sobrescribir getCategoria para nunca devolver null
+     */
     @Override
     public koolfileindexer.db.Categoria getCategoria() {
-        // Devuelve null para evitar filtros por categoría en consultas
-        return null;
+        // Si es llamado desde un filtro (donde super.getCategoria() podría devolver
+        // null),
+        // devolver una categoría por defecto
+        if (super.getCategoria() == null) {
+            return new koolfileindexer.db.Categoria("OTRO");
+        }
+        return super.getCategoria();
     }
 
     /**

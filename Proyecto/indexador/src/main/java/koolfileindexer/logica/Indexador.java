@@ -439,41 +439,22 @@ public class Indexador implements Runnable {
     }
 
     private void insertarNuevoArchivo(Archivo archivoModelo, BasicFileAttributes attrs) throws Exception {
-        try {
-            koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
-            connector.crearArchivo(archivoDb);
+        // Usar ArchivoConverter para asegurar que se crea un objeto válido
+        koolfileindexer.db.Archivo archivoDb = ArchivoConverter.toDbArchivo(archivoModelo);
 
-            // Añadir palabras clave básicas (nombre sin extensión, extensión)
-            String nombreSinExt = archivoModelo.getNombre();
-            if (nombreSinExt != null && !nombreSinExt.isEmpty()) {
-                int dotIndex = nombreSinExt.lastIndexOf('.');
-                if (dotIndex > 0) {
-                    nombreSinExt = nombreSinExt.substring(0, dotIndex);
-                }
-
-                // Asociar el nombre como palabra clave si es válido
-                if (nombreSinExt.length() > 0) {
-                    try {
-                        connector.asociarPalabraClaveArchivo(archivoDb, nombreSinExt.toLowerCase());
-                    } catch (Exception e) {
-                        System.err.println("Error al asociar palabra clave (nombre): " + e.getMessage());
-                    }
-                }
-            }
-
-            // La extensión como palabra clave
-            if (archivoModelo.getExtension() != null && !archivoModelo.getExtension().isEmpty()) {
-                try {
-                    connector.asociarPalabraClaveArchivo(archivoDb, archivoModelo.getExtension().toLowerCase());
-                } catch (Exception e) {
-                    System.err.println("Error al asociar palabra clave (extensión): " + e.getMessage());
-                }
-            }
-
-            // El resto del método sigue igual
-        } catch (SQLException e) {
-            System.err.println("Error al insertar archivo: " + e.getMessage());
+        // Verificación adicional
+        if (!(archivoDb instanceof ArchivoAdapter)) {
+            // Si por alguna razón no es un ArchivoAdapter, convertirlo
+            archivoDb = new ArchivoAdapter(
+                    archivoDb.getNombre(),
+                    archivoDb.getTamanoBytes(),
+                    archivoDb.getFechaModificacion(),
+                    archivoDb.getRutaCompleta(),
+                    archivoDb.getExtension(),
+                    archivoDb.getCategoria() != null ? archivoDb.getCategoria().getNombre() : "OTRO");
         }
+
+        connector.crearArchivo(archivoDb);
     }
 
     private Archivo crearArchivoDesdePath(Path p, BasicFileAttributes attrs) {

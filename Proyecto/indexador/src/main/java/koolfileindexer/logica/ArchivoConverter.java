@@ -17,14 +17,18 @@ public class ArchivoConverter {
      * Convierte un objeto del modelo a un objeto para la capa DB
      */
     public static koolfileindexer.db.Archivo toDbArchivo(koolfileindexer.modelo.Archivo modeloArchivo) {
-        // Cambiar la referencia para usar la clase externa
+        // Validar que la categoría no sea nula
+        String categoria = modeloArchivo.getCategoria() != null ? modeloArchivo.getCategoria().name()
+                : koolfileindexer.modelo.Categoria.OTRO.name();
+
+        // Crear el objeto usando la categoría validada
         koolfileindexer.logica.ArchivoAdapter dbArchivo = new koolfileindexer.logica.ArchivoAdapter(
                 modeloArchivo.getNombre(),
                 modeloArchivo.getTamanoBytes(),
                 modeloArchivo.getFechaModificacion(),
                 modeloArchivo.getRutaCompleta(),
                 modeloArchivo.getExtension(),
-                modeloArchivo.getCategoria().name());
+                categoria);
 
         // No transferir palabras clave o etiquetas si están vacías
         if (modeloArchivo.getPalabrasClave() != null && !modeloArchivo.getPalabrasClave().isEmpty()) {
