@@ -4,6 +4,7 @@ import koolfileindexer.common.Constants;
 import koolfileindexer.common.exceptions.InvalidFormatException;
 import koolfileindexer.common.utils.FromStr;
 import koolfileindexer.common.utils.IntoStr;
+import koolfileindexer.common.utils.StringVisitor;
 
 public class File implements IntoStr {
 
@@ -58,21 +59,34 @@ public class File implements IntoStr {
             try {
                 String[] lines = source.split(Constants.LINE_SEPARATOR);
 
-                String name = lines[0].split(": ")[1];
-                String extension = lines[1].split(": ")[1];
-                String path = lines[2].split(": ")[1];
-                String modifiedDate = lines[3].split(": ")[1];
-                Integer size = Integer.parseInt(lines[4].split(": ")[1]);
-                Integer tagsLength = Integer.parseInt(lines[5].split(": ")[1]);
+                String name = StringVisitor.visitString(lines[0], "name");
+                String extension = StringVisitor.visitString(lines[1], "extension");
+                String path = StringVisitor.visitString(lines[2], "path");
+                String modifiedDate = StringVisitor.visitString(lines[3], "modified-date");
+                String sizeString = StringVisitor.visitString(lines[4], "size");
+                Integer size;
+                if (sizeString.isEmpty()) {
+                    size = 0;
+                } else {
+                    size = Integer.parseInt(sizeString);
+                }
+                String tagsLengthString = StringVisitor.visitString(lines[5], "tags-length");
+                Integer tagsLength;
+                if (tagsLengthString.isEmpty()) {
+                    tagsLength = 0;
+                } else {
+                    tagsLength = Integer.parseInt(tagsLengthString);
+                }
 
                 String[] tags = new String[tagsLength];
 
                 for (int i = 0; i < tags.length; i++) {
-                    tags[i] = lines[6 + i].split(": ", 2)[1];
+                    tags[i] = StringVisitor.visitString(lines[6 + i], "tag");
                 }
 
                 return new File(name, extension, path, modifiedDate, size, tags);
             } catch (Exception e) {
+                System.err.println(e.getMessage());
                 throw new InvalidFormatException(Search.class);
             }
         };

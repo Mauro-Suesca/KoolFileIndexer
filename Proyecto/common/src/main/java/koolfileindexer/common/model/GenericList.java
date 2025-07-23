@@ -45,10 +45,13 @@ public class GenericList<T extends IntoStr> extends ArrayList<T> implements Into
                             StringBuilder candidate = new StringBuilder();
                             for (int k = start; k < j; k++) {
                                 candidate.append(lines[k]);
-                                if (k < j - 1)
+                                if (k < j - 1) {
                                     candidate.append(Constants.LINE_SEPARATOR);
+                                }
                             }
                             try {
+                                candidate.append(Constants.LINE_SEPARATOR);
+
                                 T item = t.from(candidate.toString());
                                 list.add(item);
                                 lineIndex = j;

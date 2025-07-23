@@ -12,11 +12,11 @@ public class ErrorMessage implements IntoStr {
         this.errorMessage = errorMessage;
     }
 
-    public String getName() {
+    public String getErrorMessage() {
         return errorMessage;
     }
 
-    public void setName(String errorMessage) {
+    public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
     }
 

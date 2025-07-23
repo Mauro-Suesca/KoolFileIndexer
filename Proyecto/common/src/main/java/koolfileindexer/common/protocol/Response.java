@@ -20,6 +20,9 @@ public class Response implements IntoStr {
 
     public Response(ResultEnum result, String data) {
         this.result = result;
+        if (data.endsWith(Constants.LINE_SEPARATOR)) {
+            data += Constants.LINE_SEPARATOR;
+        }
         this.data = data;
     }
 
