@@ -1,13 +1,15 @@
 package koolfileindexer.ui;
 
 import java.util.List;
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import koolfileindexer.common.model.File;
 import koolfileindexer.controller.Controller;
-import koolfileindexer.controller.File;
 import koolfileindexer.controller.UninitializedServerException;
+import koolfileindexer.ui.components.MenuBarComponent;
 import koolfileindexer.ui.components.SearchComponent;
 import koolfileindexer.ui.components.TableComponent;
 
@@ -16,6 +18,7 @@ public class MainWindow extends Scene {
     private SearchComponent searchBar;
     private TableComponent table;
     private Controller controller;
+    private MenuBarComponent menuBar;
 
     public MainWindow(Controller controller) {
         super(new VBox(10), 600, 600);
@@ -23,6 +26,9 @@ public class MainWindow extends Scene {
 
         VBox root = (VBox) this.rootProperty().get();
         root.setPadding(new Insets(10));
+
+        this.menuBar = new MenuBarComponent(this.controller);
+        root.getChildren().add(menuBar);
 
         this.searchBar = new SearchComponent(search -> {
             try {
@@ -34,7 +40,7 @@ public class MainWindow extends Scene {
         });
         root.getChildren().add(this.searchBar);
 
-        this.table = new TableComponent();
+        this.table = new TableComponent(controller);
 
         root.getChildren().add(this.table);
 
