@@ -576,7 +576,8 @@ public class Indexador implements Runnable {
                 int eliminados = 0;
                 try (rs) {
                     while (rs.next()) {
-                        String rutaCompleta = rs.getString("arc_ruta_completa");
+                        String rutaCompleta = ArchivoConverter.getStringWithAlternatives(rs,
+                                new String[] { "arc_ruta_completa", "ruta_completa", "path" });
                         Path path = Paths.get(rutaCompleta);
 
                         // Verificar si el archivo ya no existe

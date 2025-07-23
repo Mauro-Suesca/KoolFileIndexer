@@ -103,16 +103,40 @@ public class ArchivoConverter {
                 "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
     }
 
-    private static long getLongWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
-        for (String colName : columnNames) {
+    /**
+     * Obtiene un valor Long de un ResultSet probando varios nombres de columna
+     * posibles
+     */
+    public static long getLongWithAlternatives(ResultSet rs, String[] alternatives) throws SQLException {
+        // Añadir "tamano" y "arc_tamano" a las alternativas
+        String[] updatedAlternatives = new String[] {
+                "tamano", // Nombre en el resultado de la función
+                "arc_tamano", // Nombre en la tabla original
+                "arc_tamano_bytes", // Nombre anterior
+                "tamano_bytes", // Nombre anterior
+                "size" // Nombre en inglés
+        };
+
+        // Si se proporcionaron alternativas adicionales, combinarlas
+        if (alternatives != null && alternatives.length > 0) {
+            String[] combined = new String[updatedAlternatives.length + alternatives.length];
+            System.arraycopy(updatedAlternatives, 0, combined, 0, updatedAlternatives.length);
+            System.arraycopy(alternatives, 0, combined, updatedAlternatives.length, alternatives.length);
+            updatedAlternatives = combined;
+        }
+
+        // Intentar cada nombre de columna
+        for (String alt : updatedAlternatives) {
             try {
-                return rs.getLong(colName);
+                return rs.getLong(alt);
             } catch (SQLException e) {
-                // Intentar con el siguiente nombre
+                // Intentar con la siguiente alternativa
             }
         }
-        throw new SQLException(
-                "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
+
+        // Si no se encontró ninguna columna, lanzar excepción
+        throw new SQLException("No se encontró ninguna columna entre las alternativas: " +
+                String.join(", ", updatedAlternatives));
     }
 
     private static LocalDateTime getTimestampWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
