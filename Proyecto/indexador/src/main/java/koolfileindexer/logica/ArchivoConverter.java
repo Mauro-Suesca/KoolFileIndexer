@@ -3,6 +3,7 @@ package koolfileindexer.logica;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
@@ -16,63 +17,19 @@ public class ArchivoConverter {
      * Convierte un objeto del modelo a un objeto para la capa DB
      */
     public static koolfileindexer.db.Archivo toDbArchivo(koolfileindexer.modelo.Archivo modeloArchivo) {
-<<<<<<< HEAD
         return new ArchivoAdapter(
-=======
-        // Crear una nueva instancia de db.Archivo usando el constructor
-        return new koolfileindexer.db.Archivo(
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
                 modeloArchivo.getNombre(),
                 modeloArchivo.getTamanoBytes(),
                 modeloArchivo.getFechaModificacion(),
                 modeloArchivo.getRutaCompleta(),
                 modeloArchivo.getExtension(),
-<<<<<<< HEAD
                 modeloArchivo.getCategoria().name());
-=======
-                modeloArchivo.getCategoria().getNombre());
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
     }
 
     /**
      * Convierte un ResultSet de la base de datos a un Archivo del modelo
      */
-<<<<<<< HEAD
-    public static koolfileindexer.modelo.Archivo toModelArchivo(koolfileindexer.db.Archivo dbArchivo) {
-        // Si el dbArchivo fue creado con nuestro adaptador, podemos obtener el modelo
-        // directamente
-        if (dbArchivo instanceof koolfileindexer.db.Archivo) {
-            return ((koolfileindexer.db.Archivo) dbArchivo).getModelo();
-        }
-
-        // Si no, creamos uno nuevo
-        koolfileindexer.modelo.Archivo modeloArchivo = new koolfileindexer.modelo.Archivo(
-                dbArchivo.getNombre(),
-                dbArchivo.getRutaCompleta(),
-                dbArchivo.getExtension(),
-                dbArchivo.getTamanoBytes(),
-                LocalDateTime.now(),
-                dbArchivo.getFechaModificacion());
-
-        // Copiar palabras clave
-        Set<String> palabrasClave = dbArchivo.getPalabrasClave();
-        if (palabrasClave != null) {
-            for (String palabra : palabrasClave) {
-                try {
-                    modeloArchivo.agregarPalabraClave(palabra);
-                } catch (IllegalArgumentException e) {
-                    // Ignorar palabras clave inválidas
-                }
-            }
-        }
-
-        return modeloArchivo;
-=======
     public static Archivo fromResultSet(ResultSet rs) throws SQLException {
-        // Imprimir columnas disponibles para diagnóstico
-        java.sql.ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
-
         // Intentar obtener el nombre con diferentes formatos posibles
         String nombre = getStringWithAlternatives(rs, new String[] { "arc_nombre", "nombre", "name" });
         String rutaCompleta = getStringWithAlternatives(rs,
@@ -99,8 +56,41 @@ public class ArchivoConverter {
         return archivo;
     }
 
-    // Métodos auxiliares para manejar nombres de columna alternativos
+    /**
+     * Convierte un objeto DB a un objeto modelo
+     */
+    public static koolfileindexer.modelo.Archivo toModelArchivo(koolfileindexer.db.Archivo dbArchivo) {
+        // Si el dbArchivo fue creado con nuestro adaptador, podemos obtener el modelo
+        // directamente
+        if (dbArchivo instanceof ArchivoAdapter) {
+            // Procesamiento especial para ArchivoAdapter si es necesario
+        }
 
+        // Creamos uno nuevo
+        koolfileindexer.modelo.Archivo modeloArchivo = new koolfileindexer.modelo.Archivo(
+                dbArchivo.getNombre(),
+                dbArchivo.getRutaCompleta(),
+                dbArchivo.getExtension(),
+                dbArchivo.getTamanoBytes(),
+                LocalDateTime.now(),
+                dbArchivo.getFechaModificacion());
+
+        // Copiar palabras clave
+        Set<String> palabrasClave = dbArchivo.getPalabrasClave();
+        if (palabrasClave != null) {
+            for (String palabra : palabrasClave) {
+                try {
+                    modeloArchivo.agregarPalabraClave(palabra);
+                } catch (IllegalArgumentException e) {
+                    // Ignorar palabras clave inválidas
+                }
+            }
+        }
+
+        return modeloArchivo;
+    }
+
+    // Métodos auxiliares para manejar nombres de columna alternativos
     public static String getStringWithAlternatives(ResultSet rs, String[] columnNames) throws SQLException {
         for (String colName : columnNames) {
             try {
@@ -138,6 +128,5 @@ public class ArchivoConverter {
         }
         throw new SQLException(
                 "No se encontró ninguna columna entre las alternativas: " + String.join(", ", columnNames));
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
     }
 }

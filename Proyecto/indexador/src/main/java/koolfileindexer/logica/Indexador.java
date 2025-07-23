@@ -3,14 +3,6 @@ package koolfileindexer.logica;
 import koolfileindexer.db.ConectorBasedeDatos;
 import koolfileindexer.modelo.Archivo;
 import koolfileindexer.modelo.Categoria;
-<<<<<<< HEAD
-import koolfileindexer.logica.ArchivoConverter; // Añadir esta importación
-import koolfileindexer.logica.ArchivoAdapter; // Importar ArchivoAdapter desde el paquete correcto
-
-import java.io.File;
-import java.io.IOException;
-=======
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -447,15 +439,6 @@ public class Indexador implements Runnable {
         return a;
     }
 
-<<<<<<< HEAD
-    public void limpiarArchivosNoExistentes() {
-        System.out.println("[LIMPIEZA] Iniciando verificación de archivos indexados...");
-        try {
-            // Usar ArchivoAdapter en lugar de Archivo
-            ArchivoAdapter filtro = new ArchivoAdapter();
-            // No necesitamos establecer ningún valor específico ya que getEtiquetas()
-            // devolverá null
-=======
     // Método run que ejecuta toda la lógica del indexador
     @Override
     public void run() {
@@ -556,27 +539,10 @@ public class Indexador implements Runnable {
             // Usar ArchivoAdapter en lugar de Archivo normal
             ArchivoAdapter filtro = new ArchivoAdapter();
             filtro.setNombre("%"); // Comodín SQL para buscar cualquier nombre
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
             if (rs != null) {
-<<<<<<< HEAD
-                try (rs) {
-                    List<Long> idsExistentes = new ArrayList<>();
-                    while (rs.next()) {
-                        idsExistentes.add(rs.getLong("id"));
-                    }
-
-                    // Aquí deberías implementar la lógica para comparar con los archivos del
-                    // sistema
-                    // y decidir cuáles eliminar. Por ahora, solo se imprimen los IDs existentes.
-                    System.out.println("[LIMPIEZA] Archivos indexados existentes (por ID): " + idsExistentes);
-                }
-            }
-        } catch (SQLException sqlEx) {
-            System.err.println("Error en limpieza de archivos: " + sqlEx.getMessage());
-=======
                 // El resto del código sigue igual
                 int eliminados = 0;
                 try (rs) {
@@ -610,7 +576,6 @@ public class Indexador implements Runnable {
         } catch (Exception e) {
             System.err.println("Error inesperado durante la limpieza: " + e.getMessage());
             e.printStackTrace();
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
         }
     }
 }

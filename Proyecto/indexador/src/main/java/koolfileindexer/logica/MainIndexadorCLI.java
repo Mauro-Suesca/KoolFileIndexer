@@ -23,22 +23,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
-<<<<<<< HEAD
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-=======
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 
 public class MainIndexadorCLI {
     private static final int DEFAULT_BATCH = 100;
@@ -289,8 +278,11 @@ public class MainIndexadorCLI {
     private static List<Archivo> buscarArchivos(String[] keywords, String[] tagNames) {
         List<Archivo> resultados = new ArrayList<>();
         try {
-            // Crear un objeto Archivo como filtro
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            // CAMBIAR ESTO:
+            // koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+
+            // POR ESTO:
+            ArchivoAdapter filtro = new ArchivoAdapter();
 
             // Si hay palabras clave, intentar usarlas primero como nombre
             if (keywords != null && keywords.length > 0) {
@@ -318,7 +310,7 @@ public class MainIndexadorCLI {
                 }
 
                 // Si no encontramos por nombre, intentamos con palabras clave
-                filtro = new koolfileindexer.db.Archivo(); // Reiniciar el filtro
+                filtro = new ArchivoAdapter(); // Reiniciar el filtro con nuestro adaptador seguro
                 filtro.setNombre(null);
                 Set<String> palabrasClave = new HashSet<>(Arrays.asList(keywords));
                 filtro.setPalabrasClave(palabrasClave);
@@ -383,7 +375,7 @@ public class MainIndexadorCLI {
     private static boolean agregarEtiqueta(String filePath, String tagName) {
         try {
             // Crear un filtro para buscar el archivo por ruta
-            koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
+            ArchivoAdapter filtro = new ArchivoAdapter();
             filtro.setRutaCompleta(filePath);
 
             // Buscar el archivo
@@ -391,7 +383,7 @@ public class MainIndexadorCLI {
 
             if (rs != null && rs.next()) {
                 // Crear un archivo para modificar con los datos obtenidos
-                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo(
+                ArchivoAdapter archivo = new ArchivoAdapter(
                         rs.getString("arc_nombre"),
                         rs.getLong("arc_tamano_bytes"),
                         rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime(),
@@ -538,93 +530,4 @@ public class MainIndexadorCLI {
         }
         return rootsToScan;
     }
-<<<<<<< HEAD
-
-    private static void ejecutarIndexacion(Indexador idx, List<Path> roots) {
-        System.out.println("\n=== Iniciando indexación inicial ===");
-        for (Path root : roots) {
-            System.out.println("\n→ Indexando (batch=" + DEFAULT_BATCH + "): " + root);
-            idx.recorrerDirectorio(root, DEFAULT_BATCH);
-        }
-        System.out.println("\n=== Indexación inicial completada ===");
-    }
-
-    private static void iniciarMonitorPeriodico(Indexador idx) {
-        System.out.println("\n=== Iniciando monitor periódico ===");
-        idx.iniciarIndexacionPeriodica(
-                Paths.get(System.getProperty("user.home")),
-                DEFAULT_BATCH,
-                DEFAULT_INTERVAL);
-        System.out.println("Monitor activo - presiona 'q' + ENTER para salir");
-    }
-
-    private static void esperarComandoSalida() {
-        try (Scanner scanner = new Scanner(System.in)) {
-            while (true) {
-                String comando = scanner.nextLine().trim().toLowerCase();
-                if (comando.equals("q")) {
-                    System.out.println("\nDeteniendo servicios...");
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Busca archivos según keywords, etiquetas y filtros adicionales
-     */
-    public List<koolfileindexer.modelo.Archivo> buscarArchivos(String keywords, String tags,
-            Map<String, String> filtros) {
-        System.out.println("Búsqueda recibida - Keywords: " + keywords + " - Tags: " +
-                (tags == null || tags.isBlank() ? "ninguna" : tags) + " - Filtros: " + filtros);
-
-        try {
-            // Crear ArchivoAdapter en lugar de Archivo
-            ArchivoAdapter filtro = new ArchivoAdapter();
-
-            // Establecer criterios de búsqueda
-            if (filtros != null) {
-                if (filtros.containsKey("name")) {
-                    filtro.setNombre(filtros.get("name"));
-                }
-                if (filtros.containsKey("ext")) {
-                    filtro.setExtension(filtros.get("ext"));
-                }
-                if (filtros.containsKey("path")) {
-                    filtro.setRutaCompleta(filtros.get("path"));
-                }
-                // Otros filtros según sea necesario
-            }
-
-            // Ejecutar la búsqueda con el filtro seguro
-            ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
-
-            // Procesar resultados
-            List<koolfileindexer.modelo.Archivo> resultados = new ArrayList<>();
-            if (rs != null) {
-                try (rs) {
-                    while (rs.next()) {
-                        // Crear objeto Archivo desde el ResultSet
-                        koolfileindexer.modelo.Archivo archivo = new koolfileindexer.modelo.Archivo(
-                                rs.getString("arc_nombre"),
-                                rs.getString("arc_ruta_completa"),
-                                rs.getString("ext_extension"),
-                                rs.getLong("arc_tamano"),
-                                rs.getTimestamp("arc_fecha_creacion").toLocalDateTime(),
-                                rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime());
-                        archivo.setId(rs.getLong("arc_id"));
-                        resultados.add(archivo);
-                    }
-                }
-            }
-            return resultados;
-
-        } catch (Exception e) {
-            System.err.println("Error al buscar archivos: " + e.getMessage());
-            e.printStackTrace();
-            return Collections.emptyList();
-        }
-    }
-=======
->>>>>>> 82775b5409cd97c3ad54fa369bf077e27f86b74c
 }
