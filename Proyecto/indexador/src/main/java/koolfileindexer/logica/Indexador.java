@@ -337,10 +337,10 @@ public class Indexador implements Runnable {
         try {
             // Usar el enfoque de alternativas para obtener nombres de columnas
             String nombreActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
-                    new String[] { "arc_nombre", "nombre", "name" });
+                    new String[] { "nombre", "arc_nombre", "name" });
 
             String rutaActualEnBD = ArchivoConverter.getStringWithAlternatives(rs,
-                    new String[] { "arc_ruta_completa", "ruta_completa", "path" });
+                    new String[] { "path", "arc_path", "arc_ruta_completa", "ruta_completa" });
 
             // El resto del método sigue igual
             String nuevoNombre = nuevaRuta.getFileName().toString();
@@ -351,7 +351,8 @@ public class Indexador implements Runnable {
                 ArchivoAdapter archivo = new ArchivoAdapter();
                 archivo.setRutaCompleta(nuevaRutaCompleta);
                 archivo.setNombre(nuevoNombre);
-                String extension = rs.getString("ext_extension");
+                String extension = ArchivoConverter.getStringWithAlternatives(rs,
+                        new String[] { "extension", "ext_extension" });
                 if (extension != null) {
                     archivo.setExtension(extension);
                 }
@@ -363,10 +364,12 @@ public class Indexador implements Runnable {
             // Si la ruta cambió pero el nombre es el mismo, actualizar la ubicación
             Path rutaActualPath = Paths.get(rutaActualEnBD);
             if (!rutaActualPath.getParent().equals(nuevaRuta.getParent())) {
-                koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
+                // Usar ArchivoAdapter en lugar de Archivo
+                ArchivoAdapter archivo = new ArchivoAdapter();
                 archivo.setRutaCompleta(nuevaRutaCompleta);
                 archivo.setNombre(nuevoNombre);
-                String extension = rs.getString("ext_extension");
+                String extension = ArchivoConverter.getStringWithAlternatives(rs,
+                        new String[] { "extension", "ext_extension" });
                 if (extension != null) {
                     archivo.setExtension(extension);
                 }
@@ -407,33 +410,32 @@ public class Indexador implements Runnable {
 
             // Añadir palabras clave básicas (nombre sin extensión, extensión)
             String nombreSinExt = archivoModelo.getNombre();
-            int dotIndex = nombreSinExt.lastIndexOf('.');
-            if (dotIndex > 0) {
-                nombreSinExt = nombreSinExt.substring(0, dotIndex);
-            }
+            if (nombreSinExt != null && !nombreSinExt.isEmpty()) {
+                int dotIndex = nombreSinExt.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    nombreSinExt = nombreSinExt.substring(0, dotIndex);
+                }
 
-            // Asociar el nombre como palabra clave si es válido
-            if (nombreSinExt.length() > 0) {
-                connector.asociarPalabraClaveArchivo(archivoDb, nombreSinExt.toLowerCase());
-            }
-
-            // La extensión como palabra clave
-            if (!archivoModelo.getExtension().isEmpty()) {
-                connector.asociarPalabraClaveArchivo(archivoDb, archivoModelo.getExtension().toLowerCase());
-            }
-
-            System.out.println("[INSERTADO] " + archivoModelo.getRutaCompleta());
-
-            // Buscar usando el mismo archivoDb para la consulta
-            ResultSet nuevoRs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(
-                    archivoDb, archivoModelo.getTamanoBytes(), archivoModelo.getTamanoBytes());
-            if (nuevoRs != null) {
-                try (nuevoRs) {
-                    if (nuevoRs.next()) {
-                        archivoModelo.setId(nuevoRs.getLong("id"));
+                // Asociar el nombre como palabra clave si es válido
+                if (nombreSinExt.length() > 0) {
+                    try {
+                        connector.asociarPalabraClaveArchivo(archivoDb, nombreSinExt.toLowerCase());
+                    } catch (Exception e) {
+                        System.err.println("Error al asociar palabra clave (nombre): " + e.getMessage());
                     }
                 }
             }
+
+            // La extensión como palabra clave
+            if (archivoModelo.getExtension() != null && !archivoModelo.getExtension().isEmpty()) {
+                try {
+                    connector.asociarPalabraClaveArchivo(archivoDb, archivoModelo.getExtension().toLowerCase());
+                } catch (Exception e) {
+                    System.err.println("Error al asociar palabra clave (extensión): " + e.getMessage());
+                }
+            }
+
+            // El resto del método sigue igual
         } catch (SQLException e) {
             System.err.println("Error al insertar archivo: " + e.getMessage());
         }

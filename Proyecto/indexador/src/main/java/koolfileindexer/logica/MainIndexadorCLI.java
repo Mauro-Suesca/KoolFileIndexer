@@ -407,25 +407,28 @@ public class MainIndexadorCLI {
             // Buscar el archivo
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
 
-            if (rs != null && rs.next()) {
-                // Crear un archivo para modificar con los datos obtenidos
-                ArchivoAdapter archivo = new ArchivoAdapter(
-                        rs.getString("arc_nombre"),
-                        rs.getLong("arc_tamano_bytes"),
-                        rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime(),
-                        rs.getString("arc_ruta_completa"),
-                        rs.getString("ext_extension"),
-                        rs.getString("cat_nombre"));
-                // rs.close();
+            if (rs != null) {
+                try (rs) {
+                    if (rs.next()) {
+                        // Crear un archivo para modificar con los datos obtenidos - usar
+                        // getStringWithAlternatives
+                        ArchivoAdapter archivo = new ArchivoAdapter(
+                                ArchivoConverter.getStringWithAlternatives(rs, new String[] { "nombre", "arc_nombre" }),
+                                ArchivoConverter.getLongWithAlternatives(rs, new String[] { "tamano", "arc_tamano" }),
+                                ArchivoConverter.getTimestampWithAlternatives(rs,
+                                        new String[] { "fecha_modificacion", "arc_fecha_modificacion" }),
+                                ArchivoConverter.getStringWithAlternatives(rs, new String[] { "path", "arc_path" }),
+                                ArchivoConverter.getStringWithAlternatives(rs,
+                                        new String[] { "extension", "ext_extension" }),
+                                ArchivoConverter.getStringWithAlternatives(rs,
+                                        new String[] { "categoria", "cat_nombre" }));
 
-                // Asociar la etiqueta al archivo
-                connector.asociarEtiquetaArchivo(archivo, tagName);
-                return true;
+                        // Asociar la etiqueta al archivo
+                        connector.asociarEtiquetaArchivo(archivo, tagName);
+                        return true;
+                    }
+                }
             }
-
-            // if (rs != null) {
-            // rs.close();
-            // }
         } catch (Exception e) {
             System.err.println("Error al agregar etiqueta: " + e.getMessage());
             e.printStackTrace();
@@ -449,19 +452,8 @@ public class MainIndexadorCLI {
                 return false;
             }
 
-            // CAMBIAR ESTO:
-            // koolfileindexer.db.Archivo filtro = new koolfileindexer.db.Archivo();
-            // filtro.setRutaCompleta(filePath);
-
-            // POR ESTO:
             ArchivoAdapter filtro = new ArchivoAdapter();
             filtro.setRutaCompleta(filePath.trim());
-
-            // Y MÁS ABAJO, CAMBIAR TAMBIÉN:
-            // koolfileindexer.db.Archivo archivo = new koolfileindexer.db.Archivo();
-
-            // POR ESTO:
-            ArchivoAdapter archivo = new ArchivoAdapter();
 
             // Buscar el archivo por ruta completa
             ResultSet rs = connector.buscarArchivosPorFiltroVariasPalabrasClaveMismoArchivo(filtro, -1, -1);
@@ -470,9 +462,12 @@ public class MainIndexadorCLI {
                 try (rs) {
                     if (rs.next()) {
                         // Crear objeto archivo con los datos necesarios para asociar
+                        ArchivoAdapter archivo = new ArchivoAdapter();
                         archivo.setRutaCompleta(filePath);
-                        archivo.setNombre(rs.getString("arc_nombre"));
-                        archivo.setExtension(rs.getString("ext_extension"));
+                        archivo.setNombre(ArchivoConverter.getStringWithAlternatives(rs,
+                                new String[] { "nombre", "arc_nombre" }));
+                        archivo.setExtension(ArchivoConverter.getStringWithAlternatives(rs,
+                                new String[] { "extension", "ext_extension" }));
 
                         // Asociar la palabra clave
                         connector.asociarPalabraClaveArchivo(archivo, keyword.toLowerCase());
@@ -610,13 +605,17 @@ public class MainIndexadorCLI {
             if (rs != null) {
                 try (rs) {
                     if (rs.next()) {
+                        // Usar nombres de columna correctos para las funciones SQL
                         ArchivoAdapter archivo = new ArchivoAdapter(
-                                rs.getString("arc_nombre"),
-                                rs.getLong("arc_tamano_bytes"),
-                                rs.getTimestamp("arc_fecha_modificacion").toLocalDateTime(),
-                                rs.getString("arc_ruta_completa"),
-                                rs.getString("ext_extension"),
-                                rs.getString("cat_nombre"));
+                                ArchivoConverter.getStringWithAlternatives(rs, new String[] { "nombre", "arc_nombre" }),
+                                ArchivoConverter.getLongWithAlternatives(rs, new String[] { "tamano", "arc_tamano" }),
+                                ArchivoConverter.getTimestampWithAlternatives(rs,
+                                        new String[] { "fecha_modificacion", "arc_fecha_modificacion" }),
+                                ArchivoConverter.getStringWithAlternatives(rs, new String[] { "path", "arc_path" }),
+                                ArchivoConverter.getStringWithAlternatives(rs,
+                                        new String[] { "extension", "ext_extension" }),
+                                ArchivoConverter.getStringWithAlternatives(rs,
+                                        new String[] { "categoria", "cat_nombre" }));
                         return Optional.of(archivo);
                     }
                 }
