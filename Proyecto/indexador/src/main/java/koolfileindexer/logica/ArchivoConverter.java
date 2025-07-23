@@ -4,11 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import koolfileindexer.modelo.Archivo;
-import koolfileindexer.modelo.Categoria;
 
 /**
  * Utilitario para convertir entre objetos Archivo de diferentes paquetes
@@ -19,8 +17,8 @@ public class ArchivoConverter {
      * Convierte un objeto del modelo a un objeto para la capa DB
      */
     public static koolfileindexer.db.Archivo toDbArchivo(koolfileindexer.modelo.Archivo modeloArchivo) {
-        // Crear el objeto usando ArchivoAdapter
-        ArchivoAdapter dbArchivo = new ArchivoAdapter(
+        // Cambiar la referencia para usar la clase externa
+        koolfileindexer.logica.ArchivoAdapter dbArchivo = new koolfileindexer.logica.ArchivoAdapter(
                 modeloArchivo.getNombre(),
                 modeloArchivo.getTamanoBytes(),
                 modeloArchivo.getFechaModificacion(),
@@ -204,45 +202,5 @@ public class ArchivoConverter {
         // Si no se encontró ninguna columna, lanzar excepción
         throw new SQLException("No se encontró ninguna columna entre las alternativas: " +
                 String.join(", ", updatedAlternatives));
-    }
-
-    public static class ArchivoAdapter extends koolfileindexer.db.Archivo {
-        private String nombre;
-        private String rutaCompleta;
-        private String extension;
-
-        public ArchivoAdapter(String nombre, long tamanoBytes, LocalDateTime fechaModificacion, String rutaCompleta,
-                String extension, String categoria) {
-            super(nombre, tamanoBytes, fechaModificacion, rutaCompleta, extension, categoria);
-            this.nombre = nombre;
-            this.rutaCompleta = rutaCompleta;
-            this.extension = extension;
-        }
-
-        public ArchivoAdapter() {
-            super("irrelevant", 0L, LocalDateTime.now(), "irrelevant", "irrelevant", "OTRO");
-            this.nombre = null;
-            this.rutaCompleta = null;
-            this.extension = null;
-        }
-
-        @Override
-        public String getNombre() {
-            return nombre;
-        }
-
-        @Override
-        public String getRutaCompleta() {
-            return rutaCompleta;
-        }
-
-        @Override
-        public String getExtension() {
-            return extension;
-        }
-
-        public void setNombre(String nombre) {
-            this.nombre = nombre;
-        }
     }
 }
