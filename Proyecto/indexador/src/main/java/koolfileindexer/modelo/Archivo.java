@@ -40,7 +40,8 @@ public class Archivo {
         if (rutaCompleta.trim().isEmpty()) {
             throw new IllegalArgumentException("rutaCompleta no puede estar vacía");
         }
-        this.rutaCompleta = Paths.get(rutaCompleta)
+        String rutaRecortada = rutaCompleta.trim();
+        this.rutaCompleta = Paths.get(rutaRecortada)
                 .toAbsolutePath()
                 .normalize()
                 .toString();

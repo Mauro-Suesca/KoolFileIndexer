@@ -36,4 +36,25 @@ class EtiquetaTest {
         // Solo debe quedar una
         assertEquals(1, set.size());
     }
+
+    @Test
+    void crear_rechazaNombreDemasiadoLargo() {
+        // Crear un nombre de 51 caracteres (excede el máximo de 50)
+        String nombreLargo = "a".repeat(51);
+
+        // Verificar que se lanza la excepción apropiada
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> Etiqueta.crear(nombreLargo));
+
+        // Verificar el mensaje de error
+        assertTrue(exception.getMessage().contains("exceder 50 caracteres"),
+                "El mensaje debe indicar que excede la longitud máxima");
+    }
+
+    @Test
+    void crear_aceptaNombreConEspaciosInternos() {
+        // Verificar que se aceptan espacios internos según el regex actualizado
+        Etiqueta e = Etiqueta.crear("etiqueta con espacios");
+        assertEquals("etiqueta con espacios", e.getNombre());
+    }
 }

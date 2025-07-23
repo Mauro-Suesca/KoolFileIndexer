@@ -43,10 +43,34 @@ public class GestorEtiquetas {
     }
 
     /**
+     * Elimina etiquetas que no están en el conjunto de etiquetas válidas.
+     *
+     * @param etiquetasValidas Conjunto de nombres de etiquetas consideradas válidas
+     * @return Set de etiquetas eliminadas
+     */
+    public Set<Etiqueta> eliminarHuerfanas(Set<String> etiquetasValidas) {
+        Set<Etiqueta> eliminadas = new HashSet<>();
+        for (Archivo a : archivos) {
+            List<Etiqueta> actuales = new ArrayList<>(a.getEtiquetas());
+            for (Etiqueta e : actuales) {
+                if (!etiquetasValidas.contains(e.getNombre())) {
+                    a.quitarEtiqueta(e);
+                    eliminadas.add(e);
+                }
+            }
+        }
+        return eliminadas;
+    }
+
+    /**
      * Crea una nueva etiqueta con nombre único en todo el conjunto.
      * Si ya existe, devuelve la existente.
      */
     public Etiqueta crearUnica(String nombre) {
+        if (nombre == null) {
+            throw new IllegalArgumentException("nombre no puede ser null");
+        }
+
         String normal = nombre.trim().toLowerCase();
         for (Archivo a : archivos) {
             for (Etiqueta e : a.getEtiquetas()) {

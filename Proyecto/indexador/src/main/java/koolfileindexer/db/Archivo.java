@@ -13,6 +13,9 @@ public class Archivo {
     // Usamos el nombre completo en lugar de "as"
     private koolfileindexer.modelo.Archivo modelo;
 
+    // Añadir constante para el valor de filtro
+    private static final String FILTER_VALUE = "filtro_temp";
+
     public Archivo(String nombre, long tamanoBytes, LocalDateTime fechaModificacion,
             String rutaCompleta, String extension, String categoria) {
         // Crear el objeto modelo
@@ -39,9 +42,9 @@ public class Archivo {
     // Constructor por defecto modificado para filtros
     public Archivo() {
         this.modelo = new koolfileindexer.modelo.Archivo(
-                " ", // Usar espacio en lugar de cadena vacía
-                " ", // Usar espacio en lugar de cadena vacía
-                " ", // Usar espacio en lugar de cadena vacía
+                "filtro_temp", // Usar texto específico en lugar de espacio
+                "filtro_temp",
+                "filtro_temp",
                 0,
                 LocalDateTime.now(),
                 LocalDateTime.now());
@@ -52,7 +55,7 @@ public class Archivo {
     // Getters para ConectorBaseDatos
     public String getNombre() {
         String nombre = modelo.getNombre();
-        return nombre != null && nombre.trim().isEmpty() ? null : nombre;
+        return "filtro_temp".equals(nombre) ? null : nombre;
     }
 
     public long getTamanoBytes() {
@@ -65,24 +68,27 @@ public class Archivo {
 
     public String getRutaCompleta() {
         String ruta = modelo.getRutaCompleta();
-        return ruta != null && ruta.trim().isEmpty() ? null : ruta;
+        return "filtro_temp".equals(ruta) ? null : ruta;
     }
 
     public String getExtension() {
         String ext = modelo.getExtension();
-        return ext != null && ext.trim().isEmpty() ? null : ext;
+        return "filtro_temp".equals(ext) ? null : ext;
     }
 
     public Categoria getCategoria() {
-        if (modelo.getCategoria() == null) {
-            return new Categoria(koolfileindexer.modelo.Categoria.OTRO.name());
+        // si es la instancia de filtro temporal, devolvemos null:
+        if ("filtro_temp".equals(modelo.getExtension())
+                && "filtro_temp".equals(modelo.getNombre())
+                && "filtro_temp".equals(modelo.getRutaCompleta())) {
+            return null;
         }
+        // en caso contrario, devolvemos la categoría real:
         return new Categoria(modelo.getCategoria().name());
     }
 
     public List<Etiqueta> getEtiquetas() {
-        // Implementación mínima para compatibilidad
-        return null;
+        return Collections.emptyList(); // Nunca devuelve null
     }
 
     public Set<String> getPalabrasClave() {
