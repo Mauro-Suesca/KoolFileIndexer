@@ -306,6 +306,16 @@ public class Indexador implements Runnable {
             scheduler = null;
             System.out.println("[SCHEDULER] Detenido correctamente");
         }
+
+        // Cerrar conexión si es necesario
+        if (connector != null) {
+            try {
+                connector.terminarConexion();
+                System.out.println("[DB] Conexión cerrada correctamente");
+            } catch (Exception e) {
+                System.err.println("[DB] Error al cerrar conexión: " + e.getMessage());
+            }
+        }
     }
 
     // Añadir este método para detectar cambios en archivos
@@ -477,6 +487,16 @@ public class Indexador implements Runnable {
     }
 
     public boolean agregarPalabraClave(String filePath, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            System.err.println("La palabra clave no puede estar vacía");
+            return false;
+        }
+
+        if (!koolfileindexer.modelo.ValidadorEntrada.esPalabraClaveValida(keyword)) {
+            System.err.println("Palabra clave inválida: " + keyword);
+            return false;
+        }
+
         try {
             // Lógica para agregar una palabra clave a un archivo existente
             // 1. Buscar el archivo por su ruta
@@ -529,10 +549,14 @@ public class Indexador implements Runnable {
 
                         // Verificar si el archivo ya no existe
                         if (!Files.exists(path)) {
-                            koolfileindexer.db.Archivo archivoDb = new koolfileindexer.db.Archivo();
-                            archivoDb.setRutaCompleta(rutaCompleta);
-                            archivoDb.setNombre(rs.getString("arc_nombre"));
-                            archivoDb.setExtension(rs.getString("ext_extension"));
+                            koolfileindexer.db.Archivo archivoDb = new koolfileindexer.db.Archivo(
+                                    rs.getString("arc_nombre"),
+                                    0, // El tamaño no es relevante para eliminar
+                                    LocalDateTime.now(), // La fecha no es relevante para eliminar
+                                    rutaCompleta,
+                                    rs.getString("ext_extension"),
+                                    rs.getString("cat_nombre") // Obtener la categoría del resultset
+                            );
 
                             // Eliminar el archivo de la BD
                             connector.eliminarArchivo(archivoDb);
@@ -543,8 +567,11 @@ public class Indexador implements Runnable {
                 }
                 System.out.println("[LIMPIEZA] Total de archivos eliminados: " + eliminados);
             }
+        } catch (SQLException sqlEx) {
+            System.err.println("Error de base de datos durante la limpieza: " + sqlEx.getMessage());
+            sqlEx.printStackTrace();
         } catch (Exception e) {
-            System.err.println("Error durante la limpieza de archivos: " + e.getMessage());
+            System.err.println("Error inesperado durante la limpieza: " + e.getMessage());
             e.printStackTrace();
         }
     }

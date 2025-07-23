@@ -15,6 +15,7 @@ import koolfileindexer.common.protocol.Response;
 import koolfileindexer.common.protocol.v1.SocketServer;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -230,7 +231,16 @@ public class MainIndexadorCLI {
                     filePath = Paths.get(userHome, ".config", "koolfileindexer", "exclusiones.txt").toString();
                 }
 
-                // Recargar exclusiones
+                // Validar que el archivo existe y es accesible
+                Path path = Paths.get(filePath);
+                if (!Files.exists(path)) {
+                    return Response.err(new ErrorMessage("El archivo de exclusiones no existe: " + filePath));
+                }
+                if (!Files.isReadable(path)) {
+                    return Response.err(new ErrorMessage("El archivo de exclusiones no es legible: " + filePath));
+                }
+
+                // Cargar las exclusiones desde el archivo
                 indexador.cargarExclusiones(filePath);
 
                 return Response.ok("Exclusiones recargadas correctamente desde: " + filePath);

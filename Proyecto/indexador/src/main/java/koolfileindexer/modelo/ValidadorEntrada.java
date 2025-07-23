@@ -17,6 +17,9 @@ public class ValidadorEntrada {
     /** Letras, dígitos, guiones/guion bajo, sin espacios. */
     private static final Pattern PATRON_PALABRA = Pattern.compile("^[a-z0-9_\\-]+$");
 
+    /** Caracteres inválidos en nombres de archivo. */
+    private static final Pattern INVALID_FILENAME_CHARS_PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
+
     /** Normaliza (trim + toLowerCase) o devuelve empty si input == null. */
     private static Optional<String> normalize(String input) {
         if (input == null)
@@ -30,10 +33,18 @@ public class ValidadorEntrada {
      * — Longitud entre MIN y MAX (tras trim).
      */
     public static boolean esNombreArchivoValido(String nombre) {
-        return Optional.ofNullable(nombre)
-                .map(String::trim)
-                .filter(s -> s.length() >= MIN && s.length() <= MAX)
-                .isPresent();
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return false;
+        }
+
+        // Verificar longitud
+        String trimmed = nombre.trim();
+        if (trimmed.length() < MIN || trimmed.length() > MAX) {
+            return false;
+        }
+
+        // Verificar caracteres inválidos en nombres de archivo
+        return !INVALID_FILENAME_CHARS_PATTERN.matcher(trimmed).find();
     }
 
     /**

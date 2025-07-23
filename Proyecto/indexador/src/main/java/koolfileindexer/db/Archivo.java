@@ -75,6 +75,9 @@ public class Archivo {
     }
 
     public Categoria getCategoria() {
+        if (modelo.getCategoria() == null) {
+            return new Categoria(koolfileindexer.modelo.Categoria.OTRO.name());
+        }
         return new Categoria(modelo.getCategoria().name());
     }
 
